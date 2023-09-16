@@ -1,0 +1,9 @@
+http://127.0.0.1:5000/download_file/<url>/<path>/<int:speed>
+http://127.0.0.1:5000/
+download_file/
+https://edge08.111.ir.cdn.ir/Files/Software/Microsoft_Edge_117.0.2045.31_Stable_Multilingual_x86_Downloadly.ir.rar
+/home/abdallah/Desktop/learning/workspace/IDM/idm/src/
+1000
+
+
+curl -X POST -H "Content-Type: application/json" -d '{"url":"https://edge08.111.ir.cdn.ir/Files/Software/Microsoft_Edge_117.0.2045.31_Stable_Multilingual_x86_Downloadly.ir.rar","path":"./document.rar","speed":100}' http://localhost:5000/download_file

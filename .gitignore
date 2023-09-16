@@ -23,7 +23,7 @@ build/
 .pnp.js
 
 # Flask
-__pycache__/
+**/**/__pycache__/
 *.pyc
 venv/
 
@@ -33,3 +33,5 @@ out/
 
 # Webpack
 .DS_Store
+
+**/**/*.exe
