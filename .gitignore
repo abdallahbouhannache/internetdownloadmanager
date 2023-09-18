@@ -35,3 +35,7 @@ out/
 .DS_Store
 
 **/**/*.exe
+# pyenv manager
+**/**/.python-version
+
+**/**/download_state.json
