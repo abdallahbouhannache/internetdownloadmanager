@@ -1,25 +1,24 @@
-import logo from './logo.svg';
 import './App.css';
+import Confirm from './Component/Confirm';
+import DataTable from './Component/DataTable';
+import NavHead from './Component/NavHead';
+import New_Download from './Component/New_Download';
+import Add_Url from './Component/Add_Url';
+import Download_Progress from './Component/Download_Progress';
 
 function App() {
   return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
+    <div className="App" style={{border:"1px solid "}}>
+      {/* <NavHead />
+      <DataTable /> */}
+      {/* <Confirm /> */}
+      {/* <New_Download/> */}
+      {/* <Add_Url /> */}
+      <Download_Progress />
+      
     </div>
   );
 }
+
 
 export default App;

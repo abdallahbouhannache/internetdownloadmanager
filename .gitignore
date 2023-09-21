@@ -38,4 +38,5 @@ out/
 # pyenv manager
 **/**/.python-version
 
-**/**/download_state.json
+**/**/download_state.json.env
+.env

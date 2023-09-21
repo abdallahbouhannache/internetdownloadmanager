@@ -1,0 +1,22 @@
+.tab-transition-enter {
+    opacity: 0;
+    transform: translateX(-20px);
+  }
+  
+  .tab-transition-enter-active {
+    opacity: 1;
+    transform: translateX(0);
+    transition: opacity 300ms, transform 300ms;
+  }
+  
+  .tab-transition-exit {
+    opacity: 1;
+    transform: translateX(0);
+  }
+  
+  .tab-transition-exit-active {
+    opacity: 0;
+    transform: translateX(20px);
+    transition: opacity 300ms, transform 300ms;
+  }
+  
