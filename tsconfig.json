@@ -8,16 +8,15 @@
     "esModuleInterop": true,
     "noImplicitAny": false,
     "sourceMap": true,
-    "baseUrl": ".",
+    "baseUrl": "./src/",
     "outDir": "dist",
     "moduleResolution": "node",
     "resolveJsonModule": true,
     "paths": {
-      "@src/*": ["./src/*"],
-      "*": ["/node_modules/*"],
+      "@src/*": ["*"]
     },
   },
-  "include": ["./src/**/*", "./src/index.d.ts"],
+  "include": ["./src/**/*"],
   "excludeDirectories": [
     "/node_modules/**/*",
   ],

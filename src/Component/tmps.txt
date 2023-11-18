@@ -1,0 +1,608 @@
+const reader = new FileReader();
+
+  // async function createBlobFromFilePath(filePath) {
+  //   const response = await fetch(filePath);
+  //   const data = await response.blob();
+  //   console.log({response})
+  //   return data;
+  // }
+
+  const readFile =  (filepath) => {
+    // const filePath = '/home/abdallah/Desktop/learning/workspace/IDM/idm/src/server/download_state.json';
+    // const blob = await createBlobFromFilePath(filePath);
+    // const blob = new Blob([filePath], {type:"application/json"});
+
+    console.log("reading file");
+    // await new Promise((resolve, reject) => {
+    //   reader.onload = (e) => {
+    //     const { result } = e.target;
+    //     const content = reader.result;
+    //     console.log(content);
+    //     console.log({ e });
+    //     console.log({ targt: e.target });
+    //     console.log({ data: result.toString() });
+    //     // setdownData(result.toString());
+    //   };
+    //   // reader.onload = () => resolve(reader.result);
+    //   reader.onerror = reject;
+
+    //   return reader.result;
+    //   // return JSON.parse(reader.result.toString());
+    // });
+    reader.readAsText(filepath, "utf-8");
+
+   
+    // reader.onload = () => resolve(reader.result);
+
+  };
+
+  function fileinputhandle(e) {
+    // console.log({e})
+    // console.log({"filehandler - target ":e.target.files[0]})
+
+    // const reader = new FileReader();
+    // theFile = e.target.files[0];
+    settheFile(e.target.files[0])
+    // readFile(theFile);
+
+    // console.log({"de":reader.result})
+    // reader.onload = (e) => {
+    //   const { result } = e.target;
+    //   console.log(result)
+    // }
+    // reader.readAsText(theFile);
+
+  }
+
+  const readLocalFile = () => {
+    //   // Read the local file and parse the data.
+    //   // const downData = readFile("/home/abdallah/Desktop/learning/workspace/IDM/idm/src/server/download_state.json");
+    //   // console.log({"downData":downData})
+    //   // Update the state with the data.
+    if (theFile) {
+      readFile(theFile); 
+      setfileContent("");
+      reader.onloadend = (e) => {
+        const { result } = e.target;
+        const content = reader.result;
+        // console.log(content);
+        // console.log({ e });
+        // console.log({ targt: e.target });
+        // console.log({ data: result.toString() });
+        setfileContent(result.toString());
+      };
+    }
+    console.log({theFile});
+    console.log({fileContent});
+  };
+
+  // Poll the local file for changes every 1 second.
+  const interval = setInterval(readLocalFile, 4000);
+  useEffect(() => {
+
+    // setdownData(downData);
+    // readLocalFile()
+
+
+    // Clean up the interval when the component unmounts.
+    // return () => clearInterval(interval);
+    // readFile,theFile
+    // fileContent,reader,theFile
+  }, []);
+
+
+
+
+
+
+
+
+
+
+
+
+import React from "react";
+import { Add } from "./Add";
+import { Badge } from "./Badge";
+import { Button } from "./Button";
+import { ChevronDown } from "./ChevronDown";
+import { DropdownHeader } from "./DropdownHeader";
+import { FiltersLines } from "./FiltersLines";
+import { InputDropdown } from "./InputDropdown";
+import { Pagination } from "./Pagination";
+import { Play } from "./Play";
+import { ProgressBar } from "./ProgressBar";
+import { Stop } from "./Stop";
+import { TableCell } from "./TableCell";
+import { TableHeader } from "./TableHeader";
+import { TableHeaderCell } from "./TableHeaderCell";
+import { Trash } from "./Trash";
+import "./style.css";
+
+export const Desk = (): JSX.Element => {
+  return (
+    <div className="desk">
+      <div className="div-3">
+        <div className="table">
+          <div className="filters-bar">
+            <div className="actions-wrapper">
+              <div className="actions-2">
+                <InputDropdown
+                  className="input-dropdown-instance"
+                  inputDropdownBaseLabelFalseTypeClassName="input-dropdown-2"
+                  label={false}
+                  state="placeholder"
+                  supportingText={false}
+                  type="search"
+                />
+                <Button
+                  buttonBaseIcon={<FiltersLines className="icon-instance-node-2" />}
+                  buttonBaseText="Filters"
+                  className="design-component-instance-node-2"
+                  destructive={false}
+                  hierarchy="secondary-gray"
+                  icon="leading"
+                  size="md"
+                  state="default"
+                />
+              </div>
+            </div>
+          </div>
+          <div className="content-2">
+            <div className="column">
+              <div className="table-header-wrapper">
+                <TableHeader
+                  arrow="down"
+                  className="design-component-instance-node-2"
+                  helpIcon={false}
+                  state="default"
+                  text="File Name"
+                />
+              </div>
+              <TableCell
+                avatarSizeMdPlaceholderClassName="table-cell-2"
+                className="table-cell-instance"
+                state="default"
+                style="lead-avatar-checkbox"
+                supportingText
+                text="Catalog"
+                text1="catalogapp.io"
+                textAndSupportingClassName="table-cell-3"
+                visible={false}
+              />
+            </div>
+            <div className="column">
+              <TableHeaderCell
+                checkbox={false}
+                className="table-header-cell-instance"
+                color="gray"
+                tableHeaderText="progess"
+                text
+              />
+              <TableCell
+                className="table-cell-5"
+                progressBarProgressClassName="table-cell-4"
+                progressBarText="60"
+                state="default"
+                style="progress-bar"
+                supportingText
+              />
+            </div>
+            <div className="column">
+              <TableHeaderCell
+                checkbox={false}
+                className="table-header-cell-instance"
+                color="gray"
+                tableHeaderText="size"
+                text
+              />
+              <TableCell
+                badge="5%"
+                className="table-cell-6"
+                state="default"
+                style="trend-positive"
+                supportingText={false}
+              />
+            </div>
+            <div className="column">
+              <TableHeaderCell
+                checkbox={false}
+                className="table-header-cell-instance"
+                color="gray"
+                tableHeaderText="Last try"
+                text
+              />
+              <TableCell
+                className="table-cell-instance"
+                state="default"
+                style="text"
+                supportingText={false}
+                text="22 Jan 2022"
+              />
+            </div>
+            <div className="column">
+              <TableHeaderCell
+                checkbox={false}
+                className="table-header-cell-instance"
+                color="gray"
+                tableHeaderText="Time Left"
+                text
+              />
+              <div className="badges-wrapper">
+                <div className="badges">
+                  <Badge
+                    badgeBaseText="1h:25m"
+                    className="design-component-instance-node-2"
+                    color="success"
+                    icon="dot"
+                    size="sm"
+                  />
+                </div>
+              </div>
+            </div>
+            <div className="column">
+              <TableHeaderCell
+                checkbox={false}
+                className="table-header-cell-instance"
+                color="gray"
+                tableHeaderText="status"
+                text
+              />
+              <div className="progress-bar-wrapper">
+                <ProgressBar
+                  className="progress-bar-3"
+                  hasProgressBar={false}
+                  label="right"
+                  percentageClassName="progress-bar-4"
+                  progress="sixty"
+                  text="not finished"
+                />
+              </div>
+            </div>
+            <div className="column">
+              <div className="table-header-wrapper">
+                <TableHeader
+                  arrow="false"
+                  className="design-component-instance-node-2"
+                  helpIcon={false}
+                  state="default"
+                  text="Transfer rate"
+                />
+              </div>
+              <div className="div-wrapper">
+                <div className="text-wrapper-3">560kbs</div>
+              </div>
+            </div>
+          </div>
+          <Pagination
+            breakpoint="desktop"
+            className="pagination-instance"
+            shape="square"
+            type="card-minimal-right-aligned"
+          />
+        </div>
+        <div className="group">
+          <header className="header">
+            <div className="container">
+              <div className="logo">
+                <div className="logomark">
+                  <div className="dot-wrapper">
+                    <div className="dot-3" />
+                  </div>
+                </div>
+                <img className="img" alt="Text" src="text.png" />
+              </div>
+              <div className="navigation">
+                <div className="button-base-wrapper">
+                  <div className="img-wrapper">
+                    <img className="text-4" alt="Text" src="text-2.png" />
+                  </div>
+                </div>
+                <DropdownHeader
+                  breakpoint="desktop"
+                  buttonButtonBaseIcon={<ChevronDown className="icon-instance-node-2" />}
+                  buttonButtonBaseText="Download"
+                  className="dropdown-header-navigation-trigger"
+                  open={false}
+                  type="featured-card"
+                />
+                <DropdownHeader
+                  breakpoint="desktop"
+                  buttonButtonBaseIcon={<ChevronDown className="icon-instance-node-2" />}
+                  buttonButtonBaseText="view"
+                  className="dropdown-header-instance"
+                  open={false}
+                  type="featured-card"
+                />
+                <Button
+                  buttonBaseText="Help"
+                  buttonBaseTextClassName="button-4"
+                  className="button-3"
+                  destructive={false}
+                  hierarchy="link-gray"
+                  icon="false"
+                  size="lg"
+                  state="default"
+                />
+              </div>
+            </div>
+          </header>
+          <div className="continue">
+            <div className="state-layer">
+              <Play className="design-component-instance-node-3" playOn="play-on-2.png" state="empty" />
+              <div className="label-text">Continue</div>
+            </div>
+          </div>
+          <div className="del-all">
+            <div className="state-layer">
+              <Trash className="trash-instance" state="empty" wasteOn="waste-on-3.png" />
+              <div className="label-text">Del/all</div>
+            </div>
+          </div>
+          <div className="remove">
+            <div className="state-layer">
+              <Trash className="trash-instance" state="empty" wasteOn="waste-on-2.png" />
+              <div className="label-text">Remove</div>
+            </div>
+          </div>
+          <div className="state-layer-wrapper">
+            <div className="state-layer">
+              <Stop className="design-component-instance-node-3" state="empty" stopOn="stop-on-2.png" />
+              <div className="label-text">Stop</div>
+            </div>
+          </div>
+          <div className="add-2">
+            <div className="state-layer">
+              <Add addFile="image.png" className="design-component-instance-node-3" state="empty" />
+              <div className="label-text">Add</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+
+
+
+
+
+
+
+
+
+
+
+
+  // useEffect(() => {
+  //   if (downloadDetails) {
+  //     var { new_url, size, speed_limit, Resume } = downloadDetails;
+  //     DownloadContent = {
+  //       ...DownloadContent,
+  //       File_Size: size,
+  //       Resume,
+  //       Speed: speed_limit,
+  //     };
+  //     setDownloadContent(DownloadContent);
+  //     setNew_Url(new_url);
+  //   }
+
+  //   // axios.get(new_url).then((response) => setDownloadContent(response.data));
+  //   // fetch('/download_file', {
+  //   //   method: 'GET',
+  //   //   headers: {
+  //   //     'Content-Type': 'application/json'
+  //   //   }
+  //   // })
+
+  //   let file_infos={...DownloadContent,new_url}
+import asyncio
+import aiofiles
+from flask import Flask, render_template
+from flask_socketio import SocketIO, emit
+# from flask_cors import CORS
+from watchdog.observers import Observer
+from watchdog.events import FileSystemEventHandler
+import jsonpatch
+import bson
+
+
+class FileChangeHandler(FileSystemEventHandler):
+    def __init__(self, socketio,loop):
+        self.socketio = socketio
+        self.loop = loop
+
+    def on_modified(self, event):
+        if not event.is_directory and event.src_path == "./download_state.bson":
+            print('modified DETECTION bef handle')
+            asyncio.run_coroutine_threadsafe(self.handle_modified(event.src_path), self.loop)
+
+    async def handle_modified(self, file_path):
+        print('handle_modified CALLED')
+        async with aiofiles.open(file_path, mode='rb') as state_file:
+            print('reading the file')
+            bson_data = await state_file.read()
+            downloads_state = bson.loads(bson_data)
+            self.socketio.emit('progres', downloads_state)
+
+   
+
+def start_observer(socketio,loop):
+    observer = Observer()
+    event_handler = FileChangeHandler(socketio,loop)
+    observer.schedule(event_handler, path='./', recursive=True)
+    observer.start()
+
+    @socketio.on('connect')
+    def handle_connect():
+        # start_observer(socketio)
+        print('socket backend : Client connected')
+
+    @socketio.on('disconnect')
+    def handle_disconnect():
+        observer.stop()
+        observer.join()
+        print('socket backend :Client disconnected')
+
+    @socketio.on('progres1')
+    def handle_progres(data):
+        print('socket backend :sending you files status ', data)
+       
+
+    @socketio.on('message')
+    def handle_message(msg):
+        print('socket backend : Received message ', msg)
+        socketio.emit('message', 'yes am here:sent from backend')
+    
+   
+def run(app):
+    socketio = SocketIO(app,cors_allowed_origins="*")
+    loop = asyncio.get_event_loop()
+    start_observer(socketio,loop)
+    socketio.run(app, debug=True,port=5001)
+    loop.run_forever()
+    // axios.post('http://localhost:5000/download_file', file_infos)
+    // .then(response => console.log(response))
+    // // .then(data => {
+    // //   // Process the initial JSON data
+    // //   console.log(data);
+
+    // //   // Keep receiving JSON updates
+    // //   const eventSource = new EventSource('/download_file');
+    // //   eventSource.addEventListener('message', event => {
+    // //     const updatedData = JSON.parse(event.data);
+    // //     // Process the updated JSON data
+    // //     console.log(updatedData);
+    // //   });
+    // // })
+    // .catch(error => {
+    //   console.error('Error:', error);
+  //   });
+  // }, [downloadDetails]);
+// const socket = useRef(null);
+  // const socketUrl = "http://localhost:5001";
+
+  // useEffect(() => {
+  //   // socket = io("http://localhost:5001");
+  //   socket.current = io(socketUrl, {
+  //     autoConnect: false,
+  //   });
+
+  //   socket.current.connect();
+
+  //   // Listen for the `connect` event
+  //   socket.current.on("connect", () => {
+  //     console.log("Connected to server.");
+  //   });
+
+  //   // Listen for the `progres` event
+  //   socket.current.on("progres", (data) => {
+  //     console.log(data);
+
+  //     let download_sts = Object.entries(data);
+  //     let download_status = Object.keys(data);
+  //     console.log(download_sts);
+  //     setMessages(download_status);
+
+  //   });
+
+  //   // Listen for the `message` event
+  //   socket.current.on("message", (msg) => {
+  //     console.log({ msg });
+  //     // let download_status = Object.entries(data);
+  //     // console.log({ received: download_status });
+  //     // setMessages(() => data);
+  //   });
+
+  //   // Send a message
+  //   socket.current.emit("message", "Hello from the FRONTEND!");
+
+  //   return () => {
+  //     socket.current.disconnect();
+  //     console.log("disconnected");
+  //   };
+  // }, [socketUrl]);
+
+  // const sendMessage = (message) => {
+  //   if (socket.current.connected) {
+  //     socket.current.emit("progres", "send me updates ");
+  //   }
+  // };
+
+
+
+import asyncio
+import aiofiles
+from flask import Flask, render_template
+from flask_socketio import SocketIO, emit
+# from flask_cors import CORS
+from watchdog.observers import Observer
+from watchdog.events import FileSystemEventHandler
+import jsonpatch
+import bson
+
+
+class FileChangeHandler(FileSystemEventHandler):
+    def __init__(self, socketio,loop):
+        self.socketio = socketio
+        self.loop = loop
+
+    def on_modified(self, event):
+        if not event.is_directory and event.src_path == "./download_state.bson":
+            print('modified DETECTION bef handle')
+            asyncio.run_coroutine_threadsafe(self.handle_modified(event.src_path), self.loop)
+
+    async def handle_modified(self, file_path):
+        print('handle_modified CALLED')
+        async with aiofiles.open(file_path, mode='rb') as state_file:
+            print('reading the file')
+            bson_data = await state_file.read()
+            downloads_state = bson.loads(bson_data)
+            self.socketio.emit('progres', downloads_state)
+
+   
+
+def start_observer(socketio,loop):
+    observer = Observer()
+    event_handler = FileChangeHandler(socketio,loop)
+    observer.schedule(event_handler, path='./', recursive=True)
+    observer.start()
+
+    @socketio.on('connect')
+    def handle_connect():
+        # start_observer(socketio)
+        print('socket backend : Client connected')
+
+    @socketio.on('disconnect')
+    def handle_disconnect():
+        observer.stop()
+        observer.join()
+        print('socket backend :Client disconnected')
+
+    @socketio.on('progres1')
+    def handle_progres(data):
+        print('socket backend :sending you files status ', data)
+       
+
+    @socketio.on('message')
+    def handle_message(msg):
+        print('socket backend : Received message ', msg)
+        socketio.emit('message', 'yes am here:sent from backend')
+    
+   
+def run(app):
+    socketio = SocketIO(app,cors_allowed_origins="*")
+    loop = asyncio.get_event_loop()
+    start_observer(socketio,loop)
+    socketio.run(app, debug=True,port=5001)
+    loop.run_forever()
+
+
+
+
+
+
+
+
+

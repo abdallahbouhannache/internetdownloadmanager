@@ -19,9 +19,9 @@ const mainConfig: Configuration = {
     rules,
   },
   resolve: {
-    extensions: [".js", ".ts", ".jsx", ".tsx", ".css", ".scss", ".sass"],
+    extensions: [".js", ".ts", ".jsx", ".tsx", ".css", ".scss", ".sass",".json"],
     alias: {
-      "@src": path.resolve(__dirname, "./src/*"),
+      "@src": path.resolve(__dirname, "./src"),
     },
     // alias: {
     //   '@src': path.resolve(__dirname, './src/'),

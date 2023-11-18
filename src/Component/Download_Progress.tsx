@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import {
   Button,
   Col,
@@ -11,29 +11,40 @@ import {
   ProgressBar,
   Collapse,
 } from "react-bootstrap";
-import { Clipboard } from "react-bootstrap-icons";
+import { Clipboard, Percent } from "react-bootstrap-icons";
 import BootstrapTable from "react-bootstrap-table-next";
 import { CSSTransition } from "react-transition-group";
 import "../Style/Download_Progress.css";
+import CopyWrapper from "./copyClipBoard";
+import io from "socket.io-client";
+import axios from "axios";
+import { useStore } from "zustand";
+import useAppState, { useDownloadItem } from "../zustand/useAppState";
+import {
+  InitSocketSession,
+  Follow_Progress_Item,
+  Follow_Progress_bundle,
+  Dowload_Actions,
+} from "../Utils/DownLoad_Action";
 
-function Download_Progress() {
-  const [show, setShow] = useState(false);
-
-  const handleClose = () => setShow(false);
-  const handleShow = () => setShow(true);
+function Download_Progress({ progresID, handleClose, show }) {
+  // const [show, setShow] = useState(false);
+  // const handleClose = () => setShow(false);
+  // const handleShow = () => setShow(true);
   const [activeTab, setActiveTab] = useState("Download");
 
   const handleTabChange = (tab) => {
     setActiveTab(tab);
   };
 
-  const DownloadContent = {
-    status: "Get",
-    File_Size: "10mb",
-    Speed: "145kb",
-    Downloaded: "5.78mb",
-    Time_Left: "1min 25sec",
-    Resume: "True",
+  var DownloadContent = {
+    FileName: "",
+    Status: "Get",
+    File_Size: "25315364",
+    Speed: "145",
+    Downloaded: "5156235",
+    Time_Left: "62536125",
+    Resume: "true",
   };
 
   const data = [
@@ -49,18 +60,93 @@ function Download_Progress() {
   ];
 
   const [showContent, setshowContent] = useState(false);
+  // const [downloadProgress, setDownloadContent] = useState(DownloadContent);
+  const [new_url, setNew_Url] = useState("");
+  const [progesX, setProgresX] = useState(0);
 
   const handleToggle = () => {
     setshowContent(!showContent);
   };
 
+  const [fileContent, setfileContent] = useState("");
+  const [theFile, settheFile] = useState(null);
+  const [messages, setMessages] = useState([]);
+  // const { addDownload, initDownloads, downloads } = useStore(useAppState);
+  const { addDownload, initDownloads, downloads } = useAppState();
+
+  // useEffect(() => {
+  //   let {
+  //     FileName,
+  //     Status,
+  //     Speed,
+  //     Finished,
+  //     File_Size,
+  //     Downloaded,
+  //     Time_Left,
+  //     Resume,
+  //     url,
+  //   } = item;
+
+  //   DownloadContent = {
+  //     FileName,
+  //     Status,
+  //     Speed,
+  //     File_Size,
+  //     Downloaded,
+  //     Time_Left,
+  //     Resume,
+  //   };
+  //   // const perCent = ((Downloaded / File_Size) * 100).toFixed(2);
+  //   const perCent = Math.round((Downloaded / File_Size) * 100);
+  //   setNew_Url(url);
+  //   setProgresX(perCent);
+
+  //   setDownloadContent(DownloadContent);
+  //   // return () => {
+  //   // }
+  // }, [progresID,item]);
+
+  // const socket = useRef(null);
+  // const socketUrl = "http://localhost:5001";
+  // socket.current = io(socketUrl, {
+  //   autoConnect: false,
+  // });
+  // const downloadActions = Dowload_Actions();
+
+  // downloadActions.StartSessions(socket);
+
+  const downloadActions = Dowload_Actions();
+  var downloadProgress = progresID || {};
+  // var { id, name } = progresID;
+  // console.log(progresID);
+
+  useEffect(() => {
+
+    // let { id, name, ...rest } = progresID;
+    console.log({ progresID: progresID });
+
+    // downloadProgress = downloadActions.useDownloadItem(id, name);
+    // console.log({ downloadItem: downloadProgress });
+
+    // console.log({ downloads: downloads });
+    // console.log({ progresID: progresID });
+    // InitSocketSession(socket);
+    // Follow_Progress_Item(socket);
+    // Follow_Progress_bundle();
+  }, [downloads]);
+
+  // useEffect(() => {
+  //   console.log({ progresID: progresID });
+  // }, [progresID]);
+
   return (
     <>
-      <Button variant="primary" onClick={handleShow}>
-        Launch Modal
-      </Button>
-
-      <Modal size="lg" show={show} onHide={handleClose}>
+      <Modal size="lg" show={show} className="visible" onHide={handleClose}>
+        {/* <Button variant="primary" onClick={sendMessage}>
+          send MSG
+        </Button> */}
+        {/* {fileContent} */}
+        {messages}
         <Modal.Header closeButton>
           <Modal.Title>Downloading</Modal.Title>
         </Modal.Header>
@@ -81,17 +167,21 @@ function Download_Progress() {
                         <Form.Control
                           size="sm"
                           type="text"
-                          defaultValue="https://www.win-rar.com/fileadmin/winrar-versions/winrar/winrar-x64-623.exe"
+                          value={new_url}
                           placeholder="URL"
                           plaintext
                           readOnly
                         />
                       </Form.Group>
                       <Col xs={"auto"}>
-                        <Clipboard width="fit-content" />
+                        <CopyWrapper
+                          text={new_url}
+                          child={<Clipboard width="fit-content" />}
+                        />
+                        {/* <Clipboard width="fit-content" /> */}
                       </Col>
                     </Row>
-                    {Object.entries(DownloadContent).map(([key, value]) => (
+                    {Object.entries(downloadProgress).map(([key, value]) => (
                       <Form.Group
                         key={key}
                         as={Row}
@@ -105,7 +195,8 @@ function Download_Progress() {
                           <Form.Control
                             size="sm"
                             type="text"
-                            defaultValue={value}
+                            // defaultValue={value}
+                            value={String(value)}
                             placeholder={key}
                             plaintext
                             readOnly
@@ -113,7 +204,13 @@ function Download_Progress() {
                         </Col>
                       </Form.Group>
                     ))}
-                    <ProgressBar now={60} label={`${60}%`} striped animated />
+
+                    <ProgressBar
+                      now={progesX}
+                      label={`${progesX}%`}
+                      striped
+                      animated
+                    />
 
                     <Collapse in={showContent}>
                       <div id="example-collapse-text">
