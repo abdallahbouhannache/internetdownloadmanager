@@ -1,6 +1,8 @@
 import create, { useStore } from "zustand";
 import { v4 as uuidv4 } from "uuid";
 
+
+
 type WindowsStates = {
   progressON: boolean;
   addUrlON: boolean;
@@ -55,15 +57,21 @@ type AppState = {
   // useDownloadItem: (id: string,url: string) => Download | any;
 };
 
+// type State = {
+//   count: number;
+// };
 
+// type Actions = {
+//   increaseCount: () => void;
+//   resetCount: () => void;
+// };
 
-
-const useAppState = create<AppState>((set) => ({
+const useAppState = create<AppState>((set,get) => ({
   fname:"",
   downloads: {},
 
   initDownloads: (initData: { [FileName: string]: Download }) => {
-    // console.log({ initData });
+    // console.log({ initData:initData });
     set((state) => ({ downloads: { ...initData } }));
   },
   // downloads: [],
@@ -71,11 +79,15 @@ const useAppState = create<AppState>((set) => ({
   // initDownloads: (initData) => {
   //   set((state) => ({ downloads: [...initData] }));
   // },
+  // console.log({comingData:comingData});
   refreshDownload: (comingData: { [FileName: string]: Download }) => {
-    console.log({comingData:comingData});
-    set((state) => ({ downloads: { ...state.downloads, ...comingData } }));
+    console.log("refresh called");
+    set((state) => ({ downloads: { ...state.downloads,...comingData } }));
+    
   },
-
+  // getDownloads:()=>{
+  //   get(()=>  )
+  // },
   addDownload: (nwDown: { [FileName: string]: Download }) => {
     // const id = uuidv4(); // Implement a function to generate a unique ID
     // nwDown.id=id;
@@ -90,7 +102,7 @@ const useAppState = create<AppState>((set) => ({
 
   refreshDownloadItem: (comingData) => {
     // set((state) => ({ downloads: [...state.downloads, ...comingData] }));
-    console.log(comingData);
+    // console.log(comingData);
     return;
     // set((state) => ({
     //   downloads: state.downloads.map((download) =>
@@ -145,6 +157,7 @@ const useAppState = create<AppState>((set) => ({
 
   // useDownloadItem: (url) => set((state) => state.downloads.find((item) => item.url === url)),
 }));
+
 export default useAppState;
 
 // Selector function to get a single download item

@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { Button, Form, InputGroup, Modal } from "react-bootstrap";
 
-function Add_Url({ url, show, handleClose, openNewDownload }) {
+function Add_Url({  show, handleClose, openNewDownload }) {
   // const [newUrl, setNewUrl] = useState(url);
   const [newUrl, setNewUrl] = useState(
     "https://www.win-rar.com/fileadmin/winrar-versions/winrar/winrar-x64-623.exe"

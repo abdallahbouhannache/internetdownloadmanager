@@ -5,24 +5,30 @@ import NavHead from "./Component/NavHead";
 import New_Download from "./Component/New_Download";
 import Add_Url from "./Component/Add_Url";
 import Download_Progress from "@src/Component/Download_Progress";
-import { useEffect, useRef, useState } from "react";
+import { Suspense, useEffect, useRef, useState } from "react";
 import { io } from "socket.io-client";
 import { Button } from "react-bootstrap";
 import DownloadWorker from "./Component/Download_worker";
 
-import useAppState from "./zustand/useAppState";
-import { useStore } from "zustand";
+// import { useStore } from "zustand";
 
-import { Follow_Progress_Item, InitSocketSession ,Dowload_Actions} from "./Utils/DownLoad_Action";
+// import useCountStore from "./zustand/store";
+
+import {
+  Follow_Progress_Item,
+  InitSocketSession,
+  Dowload_Actions,
+} from "./Utils/DownLoad_Action";
 
 function App() {
   const [tableData, settableData] = useState([]);
-  
-  const { downloads, refreshDownloadItem, refreshDownload,initDownloads } =
-      useAppState();
+
+  // const {  refreshDownloadItem, refreshDownload,initDownloads } =
+  //     useAppState();
+
+  // const count = useCountStore(state => state.count);
 
   const refreshData = (json_data: ArrayLike<unknown>) => {
-
     const data = Object.entries(json_data).map(
       ([fileName, fileInfo], index) => {
         const fileInfoAny = fileInfo as any; // Type assertion to 'any'
@@ -43,7 +49,6 @@ function App() {
     return data;
   };
 
-  
   const socket = useRef(null);
   const socketUrl = "http://localhost:5001";
   socket.current = io(socketUrl, {
@@ -54,31 +59,37 @@ function App() {
   // Follow_Progress_Item(socket);
 
   const downloadActions = Dowload_Actions();
-    
-  useEffect(()=>{
+
+  useEffect(() => {
     // initDownloads({})
     downloadActions.StartSessions(socket);
+    socket.current.on("message", (refreshData) => {
+      console.log("refreshData");
+    });
 
     // setTimeout(() => {
     //   downloadActions.Follow_Progress_Item(socket);
     // }, 5000);
-    
-  },[])
-  
-  
+  }, []);
 
+  console.log("re-rendring the app");
+
+  // useEffect(()=>{
+  //   if(Object.keys(downloads).length){
+  //     console.log(downloads);
+  //   }
+  // },[downloads])
   // useEffect(() => {
-    // socket = io("http://localhost:5001");
-    
+  // socket = io("http://localhost:5001");
 
-    // socket.current.connect();
-    
-    // Follow_Progress_Item(socket);
+  // socket.current.connect();
 
-    // Listen for the `connect` event
-    // socket.current.on("connect", () => {
-    //   console.log("Connected to server.");
-    // });
+  // Follow_Progress_Item(socket);
+
+  // Listen for the `connect` event
+  // socket.current.on("connect", () => {
+  //   console.log("Connected to server.");
+  // });
 
   //   socket.current.on("initData", (initData) => {
   //     console.log("setting up downloads from server");
@@ -115,7 +126,7 @@ function App() {
   //     socket.current.disconnect();
   //     console.log("disconnected");
   //   };
-    
+
   // }, [socketUrl]);
 
   const sendMessage = (message) => {
@@ -126,21 +137,25 @@ function App() {
   };
 
   return (
-    <div className="App" style={{ border: "1px solid " }}>
-      <NavHead />
-      <DownloadWorker stc={socket.current} />
+    <Suspense>
+      {/* fallback={<Spin size="large" className="layout__loading" />} */}
 
-      <Button variant="primary" onClick={sendMessage}>
-        send MSG
-      </Button>
-      <DataTable dataTable={tableData} />
-      {/* <Confirm /> */}
-      {/* <New_Download /> */}
-      {/* <Add_Url /> */}
-      {/* <Download_Progress /> */}
-    </div>
+      <div className="App" style={{ border: "1px solid " }}>
+        <NavHead />
+        <DownloadWorker dwAct={downloadActions} stc={socket.current} />
+
+        <Button variant="primary" onClick={sendMessage}>
+          send MSG
+        </Button>
+
+        <DataTable dataTable={tableData} />
+        {/* <Confirm /> */}
+        {/* <New_Download /> */}
+        {/* <Add_Url /> */}
+        {/* <Download_Progress /> */}
+      </div>
+    </Suspense>
   );
-
 }
 
 export default App;

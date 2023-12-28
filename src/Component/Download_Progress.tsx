@@ -18,16 +18,17 @@ import "../Style/Download_Progress.css";
 import CopyWrapper from "./copyClipBoard";
 import io from "socket.io-client";
 import axios from "axios";
-import { useStore } from "zustand";
-import useAppState, { useDownloadItem } from "../zustand/useAppState";
-import {
-  InitSocketSession,
-  Follow_Progress_Item,
-  Follow_Progress_bundle,
-  Dowload_Actions,
-} from "../Utils/DownLoad_Action";
+// import { useStore } from "zustand";
+import useAppState from "../zustand/useAppState";
 
-function Download_Progress({ progresID, handleClose, show }) {
+// import {
+//   InitSocketSession,
+//   Follow_Progress_Item,
+//   Follow_Progress_bundle,
+//   Dowload_Actions,
+// } from "../Utils/DownLoad_Action";
+
+function Download_Progress({ dwAct, progresID, handleClose, show }) {
   // const [show, setShow] = useState(false);
   // const handleClose = () => setShow(false);
   // const handleShow = () => setShow(true);
@@ -37,14 +38,30 @@ function Download_Progress({ progresID, handleClose, show }) {
     setActiveTab(tab);
   };
 
-  var DownloadContent = {
-    FileName: "",
-    Status: "Get",
-    File_Size: "25315364",
-    Speed: "145",
-    Downloaded: "5156235",
-    Time_Left: "62536125",
-    Resume: "true",
+  // var DownloadContent = {
+  //   FileName: "",
+  //   Status: "Get",
+  //   File_Size: "25315364",
+  //   Speed: "145",
+  //   Downloaded: "5156235",
+  //   Time_Left: "62536125",
+  //   Resume: "true",
+  // };
+
+  var DownloadData = {
+    id: "",
+    Url: "",
+    Status: false,
+    // Status: "pending",
+    Downloaded: 0,
+    Speed: 256,
+    Cmd_Option: "new",
+    Catg: "UNKNOWN",
+    Time_Left: 0,
+    File_Size: 0,
+    // FileName: "",
+    SavePath: "./",
+    Resume: false,
   };
 
   const data = [
@@ -60,7 +77,7 @@ function Download_Progress({ progresID, handleClose, show }) {
   ];
 
   const [showContent, setshowContent] = useState(false);
-  // const [downloadProgress, setDownloadContent] = useState(DownloadContent);
+  const [downloadProgress, setDownloadContent] = useState(DownloadData);
   const [new_url, setNew_Url] = useState("");
   const [progesX, setProgresX] = useState(0);
 
@@ -72,7 +89,7 @@ function Download_Progress({ progresID, handleClose, show }) {
   const [theFile, settheFile] = useState(null);
   const [messages, setMessages] = useState([]);
   // const { addDownload, initDownloads, downloads } = useStore(useAppState);
-  const { addDownload, initDownloads, downloads } = useAppState();
+  const { downloads } = useAppState();
 
   // useEffect(() => {
   //   let {
@@ -112,32 +129,101 @@ function Download_Progress({ progresID, handleClose, show }) {
   //   autoConnect: false,
   // });
   // const downloadActions = Dowload_Actions();
-
   // downloadActions.StartSessions(socket);
 
-  const downloadActions = Dowload_Actions();
-  var downloadProgress = progresID || {};
-  // var { id, name } = progresID;
+  // const downloadActions = Dowload_Actions();
+  // var downloadProgress = {};
+  // var { id, FileName,...rest } = progresID;
   // console.log(progresID);
 
-  useEffect(() => {
-
-    // let { id, name, ...rest } = progresID;
-    console.log({ progresID: progresID });
-
-    // downloadProgress = downloadActions.useDownloadItem(id, name);
-    // console.log({ downloadItem: downloadProgress });
-
-    // console.log({ downloads: downloads });
-    // console.log({ progresID: progresID });
-    // InitSocketSession(socket);
-    // Follow_Progress_Item(socket);
-    // Follow_Progress_bundle();
-  }, [downloads]);
+  // useEffect(() => {
+  //   // let { id, name, ...rest } = progresID;
+  //   console.log({ progresID: progresID });
+  //   console.log("refreshing display");
+  //   if(FileName){
+  //     console.log("refreshing display inside");
+  //     downloadProgress = downloadActions.useDownloadItem(id, FileName);
+  //   }
+  //   // console.log({ downloadItem: downloadProgress });
+  //   // console.log({ downloads: downloads });
+  //   // console.log({ progresID: progresID });
+  //   // InitSocketSession(socket);
+  //   // Follow_Progress_Item(socket);
+  //   // Follow_Progress_bundle();
+  // }, [downloads]);
 
   // useEffect(() => {
-  //   console.log({ progresID: progresID });
+  //   // console.log({ progresID: progresID });
+  //   console.log(progresID["Status"]);
+  //   if (progresID["Status"]) {
+  //     console.log("setting downloadProgress display");
+  //     // console.log({ progresID: progresID });
+  //     // console.log({ downloadProgress: downloadProgress });
+  //     // var downloadProgress = progresID || DownloadData;
+  //     setTimeout(() => {
+  //       let dp = dwAct.useDownloadItem(progresID.id, progresID.FileName);
+  //       setDownloadContent(dp);
+  //       console.log(dp);
+  //     }, 5000);
+  //     console.log(downloadProgress);
+  //     // var { id, FileName,...rest } = downloadProgress;
+  //   }
+  // }, []);
+
+  // useEffect(() => {
+
+  //   if (progresID["Status"]) {
+  //     downloadProgress =dwAct.useDownloadItem(progresID.id, progresID.FileName);
+  //     // let dp = dwAct.useDownloadItem(progresID.id, progresID.FileName);
+  //     // if(dp){
+  //     //   dwAct.useDownloadItem(progresID.id, progresID.FileName);
+  //     //   // setDownloadContent(dp);
+  //     // }
+  //     console.log({downloadProgress});
+
+  //   }
   // }, [progresID]);
+
+  // console.log({progresID});
+  // console.log({downloadProgress});
+  
+  // setTimeout(() => {
+  //   const dp =dwAct.useDownloadItem(progresID.id, progresID.FileName);
+  //   setDownloadContent(dp);
+
+  // }, 10000);
+
+  
+  useEffect(() => {
+    // console.log(progresID);
+    // setTimeout(() => {
+      // }, 10000);
+    const dp =dwAct.useDownloadItem(progresID.id, progresID.FileName);
+    setDownloadContent(dp);
+
+    // console.log(downloadProgress)
+    // var dp = dwAct.useDownloadItem(progresID.id, progresID.FileName);
+    // setDownloadContent(dp);
+    // console.log(downloadProgress)
+  }, [downloads[progresID.FileName]]);
+
+  // downloads[progresID.FileName]
+
+  // progresID.FileName
+  // myDictionary.hasOwnProperty('myKey')
+  // console.log(downloads[progresID.FileName]);
+  console.log(downloadProgress);
+  
+  return (
+    <>
+      {progresID.FileName && downloadProgress["Status"]
+        ? downloadProgress["Downloaded"]
+        : "Loading"}
+    </>
+  );
+
+  // if (!downloadProgress["Status"]) {
+  // }
 
   return (
     <>
@@ -148,7 +234,10 @@ function Download_Progress({ progresID, handleClose, show }) {
         {/* {fileContent} */}
         {messages}
         <Modal.Header closeButton>
-          <Modal.Title>Downloading</Modal.Title>
+          <Modal.Title>
+            Downloading
+            {downloadProgress["Downloaded"]}
+          </Modal.Title>
         </Modal.Header>
         <Modal.Body>
           <Tabs activeKey={activeTab} onSelect={handleTabChange}>

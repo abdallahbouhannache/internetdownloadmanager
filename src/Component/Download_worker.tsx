@@ -1,37 +1,24 @@
 import DownloadProgress from "./Download_Progress";
 import NewDownload from "./New_Download";
 import AddUrl from "./Add_Url";
-import useAppState, { useWindowsStore } from "../zustand/useAppState";
 
 import { v4 as uuidv4 } from "uuid";
 
 import { useEffect, useState } from "react";
 import axios from "axios";
-import { useStore } from "zustand";
 
-const DownloadWorker = ({stc}) => {
-  const defaultDownload = {
-    id: "0",
-    Url: "",
-    Status: "pending",
-    Downloaded: 0,
-    Speed: 256,
-    Cmd_Option: "new",
-    Catg: "UNKNOWN",
-    Time_Left: 0,
-    File_Size: 0,
-    FileName: "",
-    SavePath: "./",
-    Resume: false,
-  };
-//   function getFileExtension(url) {
-//     var match = url.match(/\.[^.]+$/);
-//     return match ? match[0].substring(1) : '';
-//  }
+import  useAppState, { useWindowsStore  }  from "../zustand/useAppState";
+// import { useStore } from "zustand";
 
- 
-  const [newDownloadData, setNewDownloadData] = useState(defaultDownload);
-  const [progresID, setprogresID] = useState();
+const DownloadWorker = ({ stc, dwAct }) => {
+  //   function getFileExtension(url) {
+  //     var match = url.match(/\.[^.]+$/);
+  //     return match ? match[0].substring(1) : '';
+  //  }
+
+  const [progresID, setprogresID] = useState({});
+  // var DownloadItem = {};
+  const [link, setLink] = useState("");
   // const [progresID, setprogresID] = useState({ id: "0", name: "" });
 
   // for managing state of  the views
@@ -42,78 +29,19 @@ const DownloadWorker = ({stc}) => {
     progressON,
     addUrlON,
     displayAddUrl,
-  } = useStore(useWindowsStore);
+  } = useWindowsStore();
 
-  // const { addDownload } = useAppState();
+  const { addDownload ,downloads} = useAppState();
   // const downloads=useStore(useAppState, (state) => state.downloads);
 
   // for manaing state of functionalities
-  const { addDownload, initDownloads, downloads,setfname } = useAppState();
+  // const { addDownload, initDownloads, downloads, setfname } = useAppState();
 
   // for setting intial values
   //for displaying the modals
   // const [progressON, displayProgress] = useState(false);
   // const [addUrlON, displayAddUrl] = useState(false);
   // const [newDowloadON, displayNewDownload] = useState(false);
-
-  async function getFileDetails(url) {
-    // setshowAdd_Url(!showAdd_Url);
-    displayNewDownload(!newDownloadON);
-    try {
-      const response = axios.head(url);
-      response
-        .then((rs) => {
-          // console.log(rs);
-          // console.log(rs.headers["content-length"]);
-          // let newData = {
-          //   new_url: url,
-          //   savePath: "./",
-          //   name_file: "",
-          //   catg: "UNKNOWN",
-          //   size: 0,
-          //   speed_limit: 256,
-          //   command_option: "new",
-          //   downloaded: 0,
-          //   Resume: "false",
-          // };
-          let newData = {
-            id: "0",
-            Url: url,
-            Status: "completed",
-            Downloaded: 0,
-            Speed: 256,
-            Cmd_Option: "new",
-            Catg: "UNKNOWN",
-            Time_Left: 0,
-            File_Size: 0,
-            FileName: "",
-            SavePath: "./",
-            Resume: false,
-          };
-
-          const id = uuidv4(); // Implement a function to generate a unique ID
-          
-          
-          // newData["FileName"] = getFileExtension(url)
-          newData["FileName"] = url.split("/").pop().trim();
-          newData["File_Size"] = rs.headers["content-length"];
-          newData["id"]=id
-          setfname(newData["FileName"])
-
-          // cat_selector("")
-          // console.log({"newData":newData});
-          setNewDownloadData(newData);
-          // addDownload(newData);
-          console.log("send to backend from getFileDetails");
-          //   updateDownloadStatus(newData.id, newData.status);
-        })
-        .catch((error) => {
-          console.log({ errr: error });
-        });
-    } catch (error) {
-      console.error("Error:fin", error.message);
-    }
-  }
 
   const downloadFile = async (filedata) => {
     try {
@@ -127,18 +55,23 @@ const DownloadWorker = ({stc}) => {
 
       // const response = await axios.post('http://localhost:5000/download_file', filedata);
       console.log("STARTING DOWNLOAD WITH");
-      console.log({"SENDING THIS FILE DTAILS TO BACKEND":filedata});
+      console.log({ "SENDING THIS FILE DTAILS TO BACKEND": filedata });
 
-      
       axios
-      .post("http://localhost:5001/download_file", filedata)
-      .then((response) => console.log({"download_file_server_response ended":response}));
-      
+        .post("http://localhost:5001/download_file", filedata)
+        .then((response) => {
+          console.log({ "download_file_server_response ended": response });
+        });
     } catch (error) {
       console.error(error);
     }
+
   };
 
+  const openNewDownload = (uri) => {
+    setLink(uri);
+    displayNewDownload(!newDownloadON);
+  };
   const handleAddUrlClose = () => {
     displayAddUrl(false);
   };
@@ -152,20 +85,37 @@ const DownloadWorker = ({stc}) => {
     displayProgress(!progressON);
   };
 
+
   const startProgress = (data) => {
     // let name=newDownloadData['FileName']
-    // addDownload({[name]:newDownloadData});
-    console.log({"startprogress data":data});
+    console.log({ "startprogress data": data });
     
+    // var dd = {
+    //   id: "0",
+    //   Url: "",
+    //   Status: false,
+    //   Downloaded: 0,
+    //   Speed: 256,
+    //   Cmd_Option: "new",
+    //   Catg: "UNKNOWN",
+    //   Time_Left: 0,
+    //   File_Size: 0,
+    //   FileName: "winrar-x64-623(3).exe",
+    //   SavePath: "./",
+    //   Resume: false,
+    // };
+
+    let newItem = {}
+    newItem[data['FileName']]=data;
+    setprogresID(data);
+    
+    addDownload(newItem);
     displayNewDownload(false);
     displayProgress(!progressON);
+    
     downloadFile(data);
     
-   
-
-    
     // socket.current.off("filed", ()=>{});
-    
     // if (id) {
     //   // newDownloadData.id = id;
     // } else {
@@ -173,42 +123,41 @@ const DownloadWorker = ({stc}) => {
     // }
   };
 
-  useEffect(()=>{
-    console.log({"stc":stc});
-    stc.on("filed", (fileDetails)=>{
-      console.log({...fileDetails});
-      // setprogresID({ id: fileDetails.id, name: fileDetails.FileName });
-      setprogresID(fileDetails);
-      stc.off("filed", ()=>{});
-    });
-  },[progressON])
-
-
-
+  // useEffect(() => {
+  //   console.log({ stc: stc });
+  //   stc.on("filed", (fileDetails) => {
+  //     console.log({ ...fileDetails });
+  //     // setprogresID({ id: fileDetails.id, name: fileDetails.FileName });
+  //     setprogresID(fileDetails);
+  //     stc.off("filed", () => {});
+  //   });
+  // }, [progressON]);
 
   return (
     <>
       {addUrlON && (
         <AddUrl
-          url={""}
+          // url={""}
           show={addUrlON}
           handleClose={handleAddUrlClose}
-          openNewDownload={getFileDetails}
+          // openNewDownload={getFileDetails}
+          openNewDownload={openNewDownload}
         />
       )}
 
       {newDownloadON && (
         <NewDownload
-          data={newDownloadData}
+          theUrl={link}
           show={newDownloadON}
-          // showProgressBox={() => displayProgress(!progressON)}
           startProgress={startProgress}
           handleClose={handleNewDownloadClose}
+          // showProgressBox={() => displayProgress(!progressON)}
         />
       )}
 
       {progressON && (
         <DownloadProgress
+          dwAct={dwAct}
           progresID={progresID} // change it to id?(could not be provided if new download),url to use them for grabbing/tracking the data from store
           show={progressON}
           handleClose={handleProgressClose}

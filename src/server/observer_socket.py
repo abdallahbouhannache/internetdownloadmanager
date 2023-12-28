@@ -93,7 +93,7 @@ def start_observer(socketio):
             with open("./download_state.bson", 'rb') as file:
                 bson_data = file.read()
                 downloads_state = bson.loads(bson_data)
-                print(f"downloads_state:{downloads_state}")
+                # print(f"downloads_state:{downloads_state}")
                 emit('load', downloads_state)
 
         print('socket backend : Client connected')

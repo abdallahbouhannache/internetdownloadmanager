@@ -1,6 +1,8 @@
 import io from "socket.io-client";
 // import axios from "axios";
 import useAppState from "../zustand/useAppState";
+// import useCountStore from "../zustand/store";
+
 
 // import { useStore } from "zustand";
 
@@ -14,8 +16,11 @@ import useAppState from "../zustand/useAppState";
 // const socket = io('http://localhost:5000'); // replace with your server URL
 
 export function Dowload_Actions() {
-  const { downloads, refreshDownloadItem, refreshDownload, initDownloads } =
+  const {  downloads,refreshDownloadItem, refreshDownload, initDownloads,addDownload } =
     useAppState();
+  // const increaseCount = useCountStore(state => state.increaseCount);
+
+
   // const init = () => {
   //   const { downloads, refreshDownloadItem, refreshDownload } =
   //     useStore(useAppState);
@@ -46,16 +51,22 @@ export function Dowload_Actions() {
     });
 
     socket.current.on("load", (data) => {
-      console.log({ "received data": data });
-      initDownloads({ ...data });
-      console.log({downloads:downloads});
+      // console.log({ "received data": data });
+      initDownloads(data);
+      // console.log({downloads:downloads});
     });
 
     socket.current.on("progres", (refreshData) => {
-      console.log(`Refreshing singe item  from downloads from server,${refreshData}`);
-      console.log({refreshData:refreshData})
+      // console.log(`Refreshing singe item  from downloads from server,${refreshData}`);
+      // console.log({refreshData:refreshData})
       // Call the refreshDownload action in your Zustand store
+
+      // increaseCount()
+
+
       refreshDownload(refreshData);
+
+
     });
 
     // socket.current.on("initData", (initData) => {
@@ -77,9 +88,10 @@ export function Dowload_Actions() {
     });
   };
 
-   const useDownloadItem = (id = "", name = "") => {
+   const useDownloadItem = (id = "", name = "") :{} => {
     // console.log({ downloadsInside: downloads });
     // If both id and url are provided, prioritize id
+    // console.log(downloads);
     if (name) {
       return downloads[name];
       // return downloads.find((download) => download.id === id);
@@ -87,15 +99,16 @@ export function Dowload_Actions() {
       return downloads[id];
       // return downloads.find((download) => download.Url === url);
     }
-  
+    return {};
+    
     // If neither id nor url is provided, return null
-    // return null;
   };
-
+  
   return {
     StartSessions,
     Follow_Progress_Item,
     useDownloadItem,
+    addDownload
   };
 }
 
