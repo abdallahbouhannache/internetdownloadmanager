@@ -1,15 +1,31 @@
 import React, { useState } from "react";
 import { Button, Form, InputGroup, Modal } from "react-bootstrap";
+import swal from 'sweetalert';
+
+
 
 function Add_Url({  show, handleClose, openNewDownload }) {
+
   // const [newUrl, setNewUrl] = useState(url);
   const [newUrl, setNewUrl] = useState(
-    "https://www.win-rar.com/fileadmin/winrar-versions/winrar/winrar-x64-623.exe"
+    // "https://www.win-rar.com/fileadmin/winrar-versions/winrar/winrar-x64-623.exe"
+    "file:///home/abdallah/Desktop/learning/workspace/IDM/resss/winrar.rar"
   );
 
   const isUrl = (e) => {
     return true;
   };
+
+  const  begin= () => {
+
+    if (isUrl(newUrl)) {
+      handleClose();
+      openNewDownload(newUrl);
+      // console.log("Confirmed!");
+    }
+    // Add your confirmation action here
+  };
+
   return (
     <>
       {/* <Button variant="primary" onClick={handleShow}>
@@ -35,14 +51,7 @@ function Add_Url({  show, handleClose, openNewDownload }) {
         <Modal.Footer>
           <Button
             variant="outline-dark"
-            onClick={() => {
-              if (isUrl(newUrl)) {
-                handleClose();
-                openNewDownload(newUrl);
-                console.log("Confirmed!");
-              }
-              // Add your confirmation action here
-            }}
+            onClick={begin}
           >
             ok
           </Button>

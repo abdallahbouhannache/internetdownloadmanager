@@ -17,7 +17,8 @@ import Play from "../assets/play-button.png";
 import io from "socket.io-client";
 import axios from "axios";
 import { CATEGORY_TYPES } from "../Constant/Constant";
-import useAppState, { useWindowsStore } from "../zustand/useAppState";
+import useAppState, { useIdmRequests, useWindowsStore } from "../zustand/useAppState";
+import { IdmReq } from "../Utils/DownLoad_Action";
 import { useStore } from "zustand";
 
 const style = {
@@ -30,6 +31,7 @@ const style = {
 };
 
 function NavHead() {
+
   const defaultDownload = {
     new_url: "",
     savePath: "./",
@@ -50,9 +52,14 @@ function NavHead() {
     displayNewDownload,
     newDownloadON,
   } = useStore(useWindowsStore);
+
+  const { CurrentRow, SetCurrentRow } = useIdmRequests((state) => state);
+  const idmR = IdmReq();
+  
   const { fname } = useAppState();
 
   const [searchTerm, setSearchTerm] = useState("");
+
   // const [newDownloadON, displayNewDownload] = useState(false);
   // const [showProgress, setshowProgress] = useState(false);
   // const [showAdd_Url, setshowAdd_Url] = useState(false);
@@ -170,25 +177,57 @@ function NavHead() {
   };
 
   const handleContinueClick = () => {
-    displayNewDownload(!newDownloadON);
-
-    console.log("continue 2 clicked");
+    const par={}
+    par['rows']=[CurrentRow]
+    if(CurrentRow){
+      par['rows'].length>1 && displayNewDownload(!newDownloadON);
+      idmR.ContinueItems(par)
+    }
+    console.log("continue clicked");
   };
 
   const handleStopClick = () => {
-    let xd = { filename: fname };
-
-    console.log("stop 3 clicked to stop", { xd });
-    axios
-      .post("http://localhost:5001/stop", xd)
-      .then((response) =>
-        console.log({ download_file_server_response: response })
-      );
+    // let xd = { filename: fname };
+    // console.log("stop 3 clicked to stop", { xd });
+    console.log(CurrentRow);
+    const par={}
+    par['rows']=[CurrentRow]
+    if(CurrentRow){
+      idmR.StopItems(par)
+    }
+    console.log("stop clicked");
+    // axios
+    //   .post("http://localhost:5001/stop", xd)
+    //   .then((response) =>
+    //     console.log({ download_file_server_response: response })
+    //   );
   };
 
-  const handleRemoveClick = () => {
-    console.log("remove 4 clicked");
+  const handleRemoveItems = () => {
+    const par={}
+    par['rows']=[CurrentRow]
+    if(CurrentRow){
+      idmR.DelItems(par)
+    }
+    console.log("selected item has been removed");
+    // par['many']=true
+    // idmR.DelItem(SelectedRow)
   };
+
+  const handleDelAll = () => {
+    const par={}
+    par['all']=true
+    idmR.DelItems(par)
+    console.log("all items has been removed");
+    // // "selectedMultiple"
+    // if(true){
+    //   // delete selected files
+    //   par['all']=false
+    // }else{
+    //   // delete  all files
+    // }
+  };
+
   // let xurl =
   //   "https://www.win-rar.com/fileadmin/winrar-versions/winrar/winrar-x64-623.exe";
   return (
@@ -267,7 +306,7 @@ function NavHead() {
             <Image src={Stop} style={style.pic} />
           </Button>
           <Button
-            onClick={handleRemoveClick}
+            onClick={handleRemoveItems}
             variant="outline-warning"
             style={style.btn}
           >
@@ -275,7 +314,7 @@ function NavHead() {
             <Image src={Recyle} style={style.pic} />
           </Button>
           <Button
-            onClick={handleRemoveClick}
+            onClick={handleDelAll}
             variant="outline-warning"
             style={style.btn}
           >

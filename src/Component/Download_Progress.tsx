@@ -212,15 +212,15 @@ function Download_Progress({ dwAct, progresID, handleClose, show }) {
   // progresID.FileName
   // myDictionary.hasOwnProperty('myKey')
   // console.log(downloads[progresID.FileName]);
-  console.log(downloadProgress);
+  // console.log(downloadProgress);
   
-  return (
-    <>
-      {progresID.FileName && downloadProgress["Status"]
-        ? downloadProgress["Downloaded"]
-        : "Loading"}
-    </>
-  );
+  // return (
+  //   <>
+  //     {progresID.FileName && downloadProgress["Status"]
+  //       ? downloadProgress["Downloaded"]
+  //       : "Loading"}
+  //   </>
+  // );
 
   // if (!downloadProgress["Status"]) {
   // }

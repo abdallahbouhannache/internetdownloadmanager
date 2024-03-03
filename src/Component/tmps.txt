@@ -606,3 +606,360 @@ def run(app):
 
 
 
+
+
+
+
+
+
+    try {
+      let newData = {
+        id: "",
+        Url: url,
+        Status: true,
+        Downloaded: 0,
+        Speed: 256,
+        Cmd_Option: "new",
+        Catg: "UNKNOWN",
+        Time_Left: 0,
+        File_Size: 0,
+        FileName: "",
+        SavePath: "./",
+        Resume: false,
+      };
+      const response1 = await axios.head(url);
+      const contentDisposition = response1.headers["content-disposition"];
+      newData["File_Size"] = response1.headers["content-length"];
+      if (contentDisposition) {
+        newData["FileName"] = contentDisposition.split("filename=")[0];
+        // here define also download.html
+      } else {
+        newData["FileName"] = url.split("/").pop().trim();
+      }
+      let [file_name, ext] = newData["FileName"].split(".");
+
+      newData["id"] = uuidv4();
+      newData["Catg"] = cat_selector(ext);
+
+      const response2 = await axios.get("http://localhost:5001/get_file_name", {
+        params: {
+          name: file_name,
+          ext: ext,
+        },
+      });
+      newData["FileName"] = response.data;
+
+      setLocalData({ ...newData, Catg: newData["Catg"] });
+    } catch (error) {
+      console.error("Error:fin", error.message);
+    }
+
+
+
+
+
+
+
+
+
+
+
+
+    let newData = {
+      id: "",
+      Url: url,
+      Status: true,
+      Downloaded: 0,
+      Speed: 256,
+      Cmd_Option: "new",
+      Catg: "UNKNOWN",
+      Time_Left: 0,
+      File_Size: 0,
+      FileName: "",
+      SavePath: "./",
+      Resume: false,
+    };
+    const response1 = await axios.head(url);
+    const contentDisposition = response1.headers["content-disposition"];
+    newData["File_Size"] = response1.headers["content-length"];
+    if (contentDisposition) {
+      newData["FileName"] = contentDisposition.split("filename=")[0];
+    } else {
+      newData["FileName"] = url.split("/").pop().trim();
+    }
+    let [file_name, ext] = newData["FileName"].split(".");
+
+    newData["id"] = uuidv4();
+    newData["Catg"] = cat_selector(ext);
+
+    const response2 = await axios.get("http://localhost:5001/get_file_name", {
+      params: {
+        name: file_name,
+        ext: ext,
+      },
+    });
+
+    try {
+      const response = await axios.head(url);
+      response
+        .then((rs) => {
+          // console.log(rs);
+          // console.log(rs.headers["content-length"]);
+          const contentDisposition = rs.headers["content-disposition"];
+
+          let newData = {
+            id: "",
+            Url: url,
+            Status: true,
+            Downloaded: 0,
+            Speed: 256,
+            Cmd_Option: "new",
+            Catg: "UNKNOWN",
+            Time_Left: 0,
+            File_Size: 0,
+            FileName: "",
+            SavePath: "./",
+            Resume: false,
+          };
+
+          newData["File_Size"] = rs.headers["content-length"];
+
+          if (contentDisposition) {
+            newData["FileName"] = contentDisposition.split("filename=")[0];
+          } else {
+            newData["FileName"] = url.split("/").pop().trim();
+          }
+
+          let [file_name, ext] = newData["FileName"].split(".");
+
+          // newData["FileName"]=`${file_name}.${ext}`
+          // let fil={file_name,ext}
+          console.log(rs);
+          // console.log(file_name,"00",ext);
+          axios
+            .get("http://localhost:5001/get_file_name", {
+              params: {
+                name: file_name,
+                ext: ext,
+              },
+            })
+            .then(function (response) {
+              console.log(response);
+              newData["FileName"] = response.data;
+              setLocalData({ ...newData, Catg: newData["Catg"] });
+            })
+            .catch(function (error) {
+              console.error(`error in receiving filename ${error}`);
+            });
+
+          newData["id"] = uuidv4();
+          newData["Catg"] = cat_selector(ext);         
+          // let ext = newData["FileName"].split(".")[1];
+          // setLocalData({ ...LocalData, Catg: newData["Catg"] });
+          // console.log(newData);
+          // const id = uuidv4(); // Implement a function to generate a unique ID
+          // nwDown.id=id;
+          // cat_selector("")
+        })
+        .catch((error) => {
+          console.log({ errr: error });
+        });
+    } catch (error) {
+      console.error("Error:fin", error.message);
+  }
+
+
+
+// import axios from "axios";
+
+// import useCountStore from "../zustand/store";
+// import { useStore } from "zustand";
+// const socket = useRef(null);
+// const socketUrl = "http://localhost:5001";
+// socket.current = io(socketUrl, {
+//   autoConnect: false,
+// });
+// const socket = io('http://localhost:5000'); // replace with your server URL
+
+
+// const increaseCount = useCountStore(state => state.increaseCount);
+
+  // const init = () => {
+  //   const { downloads, refreshDownloadItem, refreshDownload } =
+  //     useStore(useAppState);
+  // };
+
+
+  var dd = {
+    id: "0",
+    Url: "",
+    Status: "pending",
+    Downloaded: 0,
+    Speed: 256,
+    Cmd_Option: "new",
+    Catg: "UNKNOWN",
+    Time_Left: 0,
+    File_Size: 0,
+    FileName: "",
+    SavePath: "./",
+    Resume: false,
+  };
+
+
+
+  // console.log({"stateDownloads":downloads});
+
+
+
+  // console.log(`Refreshing singe item  from downloads from server,${refreshData}`);
+  // console.log({refreshData:refreshData})
+  // Call the refreshDownload action in your Zustand store
+  // increaseCount()
+  // refreshDownload(refreshData);
+
+
+  // socket.current.on("initData", (initData) => {
+    //   console.log("socket  setting up downloads from server");
+    // });
+
+
+
+    // Call the refreshDownload action in your Zustand store
+    // refreshDownload(refreshData);
+
+
+    // console.log({ downloadsInside: downloads });
+    // If both id and url are provided, prioritize id
+    // console.log(downloads);
+
+
+
+    // return downloads.find((download) => download.id === id);
+
+
+
+    // If neither id nor url is provided, return null
+
+
+
+
+
+
+
+    // addDownload,
+
+    // const { downloads, initDownloads } = useStore(useAppState);
+  
+
+
+    // socket.current.on("initData", (initData) => {
+      //   console.log("socket  setting up downloads from server");
+      //   initDownloads(initData)
+      // });
+    
+
+      // return Socket;
+
+
+      // console.log("Follow progress item started");
+      // socket.current.emit("progres", "whats up");
+
+
+
+
+
+      // Call the refreshDownload action in your Zustand store
+      // refreshDownload(refreshData);
+
+
+
+
+
+    // Call the refreshDownload action in your Zustand store
+    // refreshDownload(refreshData);
+
+
+
+    // export const Follow_Progress_bundle = (socket) {
+      //   const { downloads, refreshDownloadItem, refreshDownload } =
+      //     useStore(useAppState);
+      //   socket.current.on("progres", (refreshData) => {
+      //     console.log("Refreshing data from downloads from server");
+      //     // Call the refreshDownload action in your Zustand store
+      //     refreshDownload(refreshData);
+      //   });
+      // };
+      
+      //   if(dis){
+        //     socket.current.disconnect();
+        //     console.log("disconnected from server");
+        //   }
+
+
+        // setLocalData({ ...newData, Catg: newData["Catg"] });
+
+
+
+
+        // let theNewFile={}
+        // let x=Math.floor(Math.random()*10)
+        // theNewFile["FileName"+x] = {...newData};
+        // console.log(out);
+        // console.log({newData});
+        // console.log({NewItem});
+
+        // settableData(tableData)
+
+
+        // const AppendToDownloads=(filedata)=>{
+          //   let out={}
+          //   let x=Math.floor(Math.random()*10)
+          //   out["FileName"+x] = {...filedata};
+          //   // console.log(out);
+          //   addDownload(out);
+          // }
+        
+          // let NwData={}
+          // NwData["FileName"] = newFileData;
+          // console.log(data);
+
+
+
+          // 
+          // console.log({ newFileD });
+
+
+
+          // const DelItem = async (Item) => {
+            //   axios.post("http://localhost:5001/delete_download", Item).then((rs) => {
+            //     if (rs["status"] == 200) {
+            //       console.log("file deleted from list");
+            //     } else {
+            //       console.log("file not found on download list");
+            //     }
+            //   });
+            // };
+
+
+
+
+
+
+
+
+
+
+
+            // setshowAdd_Url(!showAdd_Url);
+            // setnewDownloadON(!newDownloadON);
+            // displayNewDownload(!newDownloadON);
+
+
+
+
+
+
+
+
+
+

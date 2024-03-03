@@ -1,13 +1,13 @@
 import DownloadProgress from "./Download_Progress";
 import NewDownload from "./New_Download";
 import AddUrl from "./Add_Url";
+import { useEffect, useState } from "react";
+import axios from "axios";
+import useAppState, { useIdmRequests, useWindowsStore } from "../zustand/useAppState";
+import { IdmReq } from "../Utils/DownLoad_Action";
 
 import { v4 as uuidv4 } from "uuid";
 
-import { useEffect, useState } from "react";
-import axios from "axios";
-
-import  useAppState, { useWindowsStore  }  from "../zustand/useAppState";
 // import { useStore } from "zustand";
 
 const DownloadWorker = ({ stc, dwAct }) => {
@@ -31,7 +31,12 @@ const DownloadWorker = ({ stc, dwAct }) => {
     displayAddUrl,
   } = useWindowsStore();
 
-  const { addDownload ,downloads} = useAppState();
+  const { addDownload, downloads } = useAppState();
+
+  const idmR = IdmReq();
+  
+  const { CreateReq,NewItem } = useIdmRequests(state => state);
+
   // const downloads=useStore(useAppState, (state) => state.downloads);
 
   // for manaing state of functionalities
@@ -65,12 +70,20 @@ const DownloadWorker = ({ stc, dwAct }) => {
     } catch (error) {
       console.error(error);
     }
-
   };
-
+  
   const openNewDownload = (uri) => {
     setLink(uri);
     displayNewDownload(!newDownloadON);
+
+    idmR.InitItem(uri);
+    
+    // console.log({uri});
+    // CreateReq(newData)
+    // AddX(55)
+    // console.log({x});
+    // console.log({"this has been .added to table ":NewItem});
+
   };
   const handleAddUrlClose = () => {
     displayAddUrl(false);
@@ -85,11 +98,42 @@ const DownloadWorker = ({ stc, dwAct }) => {
     displayProgress(!progressON);
   };
 
+  const DownloadLater = (data) => {
+    // displayProgress(false);
+    // displayProgress(!progressON);
+    // console.log("download_later:: ",data);
+    // idmR.AppendToDownloads(data);
+    idmR.StartItem(data);
+    displayNewDownload(false);
 
+    // return
+    
+    // let newFileD = {};
+    // newFileD[data["FileName"]] = data;
+
+    // let newData = {
+    //   id: "11",
+    //   Url: "url",
+    //   Status: true,
+    //   Downloaded: 0,
+    //   Speed: 120000,
+    //   Cmd_Option: "new",
+    //   Catg: "UNKNOWN",
+    //   Time_Left: 0,
+    //   File_Size: 0,
+    //   FileName: "winrar",
+    //   SavePath: "./",
+    //   Resume: false,
+    //   Finished: false,
+    // };
+
+    // console.log("later download",data);
+
+    // addDownload(newFileD);
+
+  };
   const startProgress = (data) => {
     // let name=newDownloadData['FileName']
-    console.log({ "startprogress data": data });
-    
     // var dd = {
     //   id: "0",
     //   Url: "",
@@ -105,16 +149,13 @@ const DownloadWorker = ({ stc, dwAct }) => {
     //   Resume: false,
     // };
 
-    let newItem = {}
-    newItem[data['FileName']]=data;
     setprogresID(data);
-    
-    addDownload(newItem);
     displayNewDownload(false);
     displayProgress(!progressON);
+    idmR.StartItem(data);
     
-    downloadFile(data);
-    
+
+    // downloadFile(data);
     // socket.current.off("filed", ()=>{});
     // if (id) {
     //   // newDownloadData.id = id;
@@ -137,11 +178,11 @@ const DownloadWorker = ({ stc, dwAct }) => {
     <>
       {addUrlON && (
         <AddUrl
-          // url={""}
-          show={addUrlON}
-          handleClose={handleAddUrlClose}
+        show={addUrlON}
+        handleClose={handleAddUrlClose}
+        openNewDownload={openNewDownload}
+           // url={""}
           // openNewDownload={getFileDetails}
-          openNewDownload={openNewDownload}
         />
       )}
 
@@ -150,6 +191,7 @@ const DownloadWorker = ({ stc, dwAct }) => {
           theUrl={link}
           show={newDownloadON}
           startProgress={startProgress}
+          DownloadLater={DownloadLater}
           handleClose={handleNewDownloadClose}
           // showProgressBox={() => displayProgress(!progressON)}
         />
@@ -163,6 +205,7 @@ const DownloadWorker = ({ stc, dwAct }) => {
           handleClose={handleProgressClose}
         />
       )}
+
     </>
   );
 };

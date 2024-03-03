@@ -3,13 +3,15 @@ from threading import Thread
 
 # from socket import SocketIO
 from flask_socketio import SocketIO, emit
+
 import aiohttp
 import asyncio
 import aiofiles
 
-
 from tool import get_file_size
-from flask import Flask, request, jsonify
+from Constants import STATUS_DOWNLOAD_FILE ,SAVE_DIR
+
+from flask import Flask, request, jsonify ,Response
 from flask_cors import CORS
 import os
 import re
@@ -20,21 +22,17 @@ import bson
 from observer_socket import run_observer
 import time
 
+
 # from quart import Quart
 # app = Quart(__name__)
-
-
 # loop = asyncio.get_event_loop()
 app = Flask(__name__)
 socketio = SocketIO(app,cors_allowed_origins="*")
 # socketio = SocketIO(app)
-
 # CORS(app,resources={r"/*":{"origins":"*"}})
-
 # CORS(app)
 
 downloads = {}
-
 
 # def get_file_details(url):
 #     parsed_url = urlparse(url)
@@ -48,7 +46,6 @@ downloads = {}
 #    response = requests.head(url)
 #    file_size = int(response.headers.get('Content-Length', 0))
 #    return file_size
-
 
 @app.route('/get_file_name', methods=['GET'])
 def get_file_name():
@@ -76,8 +73,6 @@ def get_file_name():
     # print(f'file_count {file_count}')    
 
     return file_name
-
-
 
 @app.route('/prepare_download_file', methods=['POST'])
 async def download_header():
@@ -169,6 +164,10 @@ async def download_header():
     # socketio.emit('filed', localDownload[file_name])
 
 
+
+
+
+
 @app.route('/download_file', methods=['POST'])
 async def download_file():
     print("starting download_file")
@@ -180,7 +179,7 @@ async def download_file():
     speed_limit = file_infos.get('Speed') or 2048
     Conx_number = file_infos.get('Conx_number') or 2
 
-    speed_limit = 80000
+    # speed_limit = 80000
     downloaded_size = file_infos.get('Downloaded') or 0
     save_dir = file_infos.get('SavePath') or "./"
     command = file_infos.get('Cmd_Option') or "new" # values continue,restart,new
@@ -188,14 +187,12 @@ async def download_file():
     file_save_path = os.path.join(save_dir, file_name)
     file_size = file_infos.get('File_Size') or 0
 
-
     global downloads
 
     if os.path.exists(save_state_file):
         with open(save_state_file, mode='rb') as state_file:
             print('reading the file')
             bson_data =state_file.read()
-
         downloads = bson.loads(bson_data)
 
     file_save_path = os.path.join(save_dir, file_name)   
@@ -220,10 +217,14 @@ async def download_file():
     "Resume": False,
     }
 
+    # print(downloads[file_name])
+
+    # write_status_file(downloads)
+
+    # return f"File {file_name}  Download finish"
+    
     
     # File_Bytes=bytearray()
-    
-
 
     # byte_range = downloads[file_name]['Downloaded']
     # headers={'Range': f'bytes={byte_range}-'}
@@ -232,48 +233,41 @@ async def download_file():
     #max_connections=5 # limit to 5 concurrent connections
     # )
     # )
+    if not file_size:
+        return f"File {file_name}  Filesize error"
+
+
     async with aiohttp.ClientSession() as session:
-        # async with session.get(file_url,headers=headers) as response:
-
-        # file_size = int(response.headers.get('Content-Length', 0))
-        # if not downloads[file_name]['File_Size']==file_size:
-        #     downloads[file_name]['File_Size']=file_size
-
-        # chunk_size=500 * 1024 
-        # num_chunks = file_size // chunk_size
-
-        
-
-        tasks = []
-
-        # connexions=Conx_number
-
-        # file_size = 1000000 # size of the file in bytes
-        chunk_size = file_size // Conx_number # size of each chunk in bytes
-
-        chunks = [(i * chunk_size, (i+1) * chunk_size - 1) for i in range(file_size // chunk_size)]
-
-        # while downloaded_size < file_size :
-
-        # for cnx in range(0,connexions):
-        for start, end in chunks:
-            print(start,end)
-            # task = await asyncio.create_task(my_task())
-            # task = await asyncio.create_task(download_task(session, file_url, start, end,file_name,downloads,file_save_path,save_state_file))
-            task=download_task(session, file_url, start, end,file_name,file_save_path,save_state_file)
-            tasks.append(task)
-            print(tasks)
-            await asyncio.sleep(1)
-
-        await asyncio.gather(*tasks)
-        
-        # print(downloads)
-        # print(len(File_Bytes))
-
-        # await write_chunk_to_file(file_save_path,File_Bytes,downloads,file_name,save_state_file)
+        try:
+            # async with session.get(file_url,headers=headers) as response:
+            # file_size = int(response.headers.get('Content-Length', 0))
+            # if not downloads[file_name]['File_Size']==file_size:
+            #     downloads[file_name]['File_Size']=file_size
+            # chunk_size=500 * 1024 
+            # num_chunks = file_size // chunk_size
+            tasks = []
+            # connexions=Conx_number
+            # file_size = 1000000 # size of the file in bytes
+            chunk_size = file_size // Conx_number # size of each chunk in bytes
+            chunks = [(i * chunk_size, (i+1) * chunk_size - 1) for i in range(file_size // chunk_size)]
+            # while downloaded_size < file_size :
+            # for cnx in range(0,connexions):
+            for start, end in chunks:
+                print(start,end)
+                # task = await asyncio.create_task(my_task())
+                # task = await asyncio.create_task(download_task(session, file_url, start, end,file_name,downloads,file_save_path,save_state_file))
+                task=download_task(session, file_url, start, end,file_name,file_save_path,save_state_file)
+                tasks.append(task)
+                print(tasks)
+                await asyncio.sleep(1)
+            await asyncio.gather(*tasks)
+            # print(downloads)
+            # print(len(File_Bytes))
+            # await write_chunk_to_file(file_save_path,File_Bytes,downloads,file_name,save_state_file)
+        except ConnectionError as e:
+            print("error in fetching file")
 
     return f"File {file_name}  Download finish"
-
 
 
 async def download_task(session, url, start, end,file_name,file_save_path,save_state_file):
@@ -309,12 +303,12 @@ async def download_task(session, url, start, end,file_name,file_save_path,save_s
         print(downloads[file_name])
         print('\n')
         await asyncio.sleep(1)
-        
         # while downloaded_size < part_size :
-        while downloaded_size < end :
+        while downloaded_size < end and downloads[file_name]['Status']:
             try:
                 chunk = await response.content.read(speed_limit)
-                File_Bytes+=chunk
+                # File_Bytes+=chunk
+                File_Bytes=chunk
                 downloaded_size += len(chunk)
                 downloads[file_name]['Downloaded']=downloaded_size
                 socketio.emit('progres', downloads)
@@ -328,12 +322,13 @@ async def download_task(session, url, start, end,file_name,file_save_path,save_s
             # print(downloads)
             # EMIT EVERY 1SECOND
             
-            print(f'from --start:{start} downloading ---{downloaded_size}--- filesize:{file_size}: --end:{end}')
-            await asyncio.sleep(1)
+            print(f'from --start:{start} downloading ---{get_file_size(downloaded_size)}--- filesize:{get_file_size(file_size)}: --end:{get_file_size(end)}')
+            await asyncio.sleep(0.2)
+            await write_chunk_to_file(file_save_path,File_Bytes,file_name,save_state_file)
 
-        print(f'fbytes {len(File_Bytes)}')
+        # print(f'fbytes {len(File_Bytes)}')
 
-        await write_chunk_to_file(file_save_path,File_Bytes,file_name,save_state_file)
+        # await write_chunk_to_file(file_save_path,File_Bytes,file_name,save_state_file)
         await asyncio.sleep(1)
 
         # response.release()
@@ -369,7 +364,8 @@ async def write_chunk_to_file(file_path,File_Bytes,file_name,save_state_file):
     
     # print(downloads,"before task started")
 
-    response_data = downloads[file_name]
+    # response_data = downloads[file_name]/////***
+
     # Return the response as JSON
     # return jsonify(response_data)
    
@@ -392,33 +388,209 @@ def get_filename_from_content_disposition(content_disposition):
     return 'downloaded_file.html'
 
 
+
+
+def stop_files(file_names=None,all=None):
+    
+    status_tracker=read_status_file()
+    if all:
+        file_names = list(status_tracker.keys())
+
+    for file_name in file_names:
+        Item=status_tracker[file_name]['Status'] or False
+        if Item:
+            status_tracker[file_name]['Status'] = False
+    time.sleep(0.05)
+    write_status_file(status_tracker)
+
+
 @app.route('/stop_download', methods=['POST'])
 def stop_download():
     data = request.get_json()
-    file_name = data.get('filename')
-    returnStatus={file_name:file_name,"Status":False}
+    all = data.get('all') or None
+    save_state_file = os.path.join(SAVE_DIR,STATUS_DOWNLOAD_FILE)
 
-    if file_name in downloads:
-        if downloads[file_name].get('Status'):
-            downloads[file_name]['Status'] = False
-            return f"Download of {file_name} stopped successfully"
+    if not os.path.exists(save_state_file):
+        print("error no file is on download")  
+        return jsonify({"error":"error no file is on download"})
+    else:
+        if all:
+            stop_files(all)
+            res=f"All files are stopped"
+        else:
+            res=f"the selected files are stopped"
+            items=data.get('rows') or None
+            file_names=[item['filename'] for item in items if 'filename' in item]
+            print(file_names)
+            stop_files(file_names)
 
-    return f"the {file_name} is not running"
+        # with open(save_state_file, mode='rb') as state_file:
+        #     bson_data =state_file.read()
+        # downloads = bson.loads(bson_data)
+
+    # print(array)
+    # print(downloads.get("winrar-x64-623(1).exe"))
+    # array = [ [k, v] for k, v in downloads.items()]
+    # print(array[0]==["winrar-x64-623(1).exe"])
+        # data = request.get_json()
+        # file_name = data.get('FileName')
+        # returnStatus={file_name:file_name,"Status":False}
+        # Item=downloads.get(file_name)
+        # print(Item)
+        # if Item:
+        #     if Item.get('Status'):
+        #         print(Item.get('Status'))
+        #         Item['Status'] = False
+        #         return f"Download of {file_name} stopped successfully"
+
+    # return f"the {file_name} is not running"
+    return Response(res, status=200, mimetype='application/json')
+
+
+def resume_files(file_names=None,all=None):
+    
+    status_tracker=read_status_file()
+    if all:
+        file_names = list(status_tracker.keys())
+
+    for file_name in file_names:
+        Item=status_tracker[file_name]['Status'] or False
+        if Item:
+            status_tracker[file_name]['Status'] = True
+            asyncio.create_task(download_file())
+    time.sleep(0.05)
+    write_status_file(status_tracker)
+
 
 @app.route('/resume_download', methods=['POST'])
 def resume_download():
     data = request.get_json()
-    file_name = data.get('filename')
+    all = data.get('all') or None
+    save_state_file = os.path.join(SAVE_DIR,STATUS_DOWNLOAD_FILE)
 
-    if file_name in downloads:
-        downloads[file_name]['Status'] = True
+    if not os.path.exists(save_state_file):
+        res=f"error no file in download list"
     else:
-        downloads[file_name] = {'Status': True}
+        if all:
+            resume_files(all)
+            res=f"All files are resumed"
+        else:
+            res=f"the selected files are resumed"
+            items=data.get('rows') or None
+            file_names=[item['filename'] for item in items if 'filename' in item]
+            resume_files(file_names)
+    return Response(res, status=200, mimetype='application/json')
 
-        # Start a new download task
-        asyncio.create_task(download_file())
+    # save_state_file = os.path.join("./", 'download_state.bson')
+    # if not os.path.exists(save_state_file):
+    #     print("error no file is on download")  
+    #     return jsonify({"error":"error no file is on download"})
+    # else:
+    #     with open(save_state_file, mode='rb') as state_file:
+    #         bson_data =state_file.read()
+    #     downloads = bson.loads(bson_data)
+    #     data = request.get_json()
+    #     file_name = data.get('FileName')
+    #     Item=downloads.get(file_name)
+    #     if Item:
+    #         # if Item.get('Status'):
+    #         Item['Status'] = True
+    #         # Start a new download task
+    #         asyncio.create_task(download_file())
+    #         return f"Download of {file_name} resumed successfully"
+    #     else:
+    #         downloads[file_name] = {'Status': False}
 
-    return f"Download of {file_name} resumed"
+
+
+def read_status_file():
+    save_state_file = os.path.join(SAVE_DIR,STATUS_DOWNLOAD_FILE)
+    with open(save_state_file, mode='rb') as state_file:
+        bson_data =state_file.read()
+        downloads = bson.loads(bson_data)
+        return downloads
+
+def  write_status_file(new_status):
+    save_state_file = os.path.join(SAVE_DIR,STATUS_DOWNLOAD_FILE)
+    with open(save_state_file, mode='wb') as state_file:
+        bson_data = bson.dumps(new_status)
+        state_file.write(bson_data)
+
+            
+
+
+    
+def delete_files(file_names=None,all=None):
+    status_tracker=read_status_file()
+    if all:
+        file_names = list(status_tracker.keys())
+
+    print({"all":all})
+    print({"f":file_names})
+    for file_name in file_names:
+        Item=status_tracker.get(file_name) or None
+        if Item.get('Status'):
+            Item['Status'] = False
+            # time.sleep(0.2)
+        del status_tracker[file_name]
+        file_save_path = os.path.join( SAVE_DIR, file_name)
+        if os.path.exists(file_save_path) :
+            os.remove(file_save_path)
+    write_status_file(status_tracker)
+    
+
+@app.route('/delete_download', methods=['POST'])
+def delete_download():
+    data = request.get_json()
+    all = data.get('all') or None
+    save_state_file = os.path.join(SAVE_DIR,STATUS_DOWNLOAD_FILE)
+    # many = data.get('many') or None
+    # status_download_file='download_state.bson'
+    # save_dir = "./"
+    # save_state_file = os.path.join(save_dir,status_download_file)
+
+    if not os.path.exists(save_state_file):
+        # print("error no file is on download")
+        rs=f"error file status not found"
+        # return Response(rs, status=200, mimetype='application/json')
+    else:
+        # with open(save_state_file, mode='rb') as state_file:
+        #     bson_data =state_file.read()
+        # downloads = bson.loads(bson_data)
+        # read_status_file()
+        if all:
+            delete_files(None,all)
+            rs=f"the download list is emptied"
+            # items=data.get('rows') or None
+            # file_names=[item['filename'] for item in items if 'filename' in item]
+            # delete_files(file_names)
+            # Item=downloads.get(file_name) or None
+            # if Items:
+            # for file_name in File_List:
+                # del downloads[file_name]
+                # file_save_path = os.path.join( save_dir, file_name)
+                # if os.path.exists(file_save_path) :
+                #     os.remove(file_save_path)
+        else:
+            items=data.get('rows') or None
+            file_names=[item['FileName'] for item in items if 'FileName' in item]
+            delete_files(file_names,None)
+            rs=f"the selected files are deleted"
+            # {file_names}
+            # if many:
+            # else:
+            #     file_names = [data.get('FileName')] or None
+            # del downloads[file_name]
+            # file_save_path = os.path.join( save_dir, file_name)
+            # if os.path.exists(file_save_path) :
+            #     os.remove(file_save_path)
+        # with open(save_state_file, mode='wb') as state_file:
+        #     bson_data = bson.dumps(downloads)
+        #     state_file.write(bson_data)
+        status_tracker=read_status_file()
+        print(status_tracker)
+        socketio.emit('progres', status_tracker)
+    return Response(rs, status=200, mimetype='application/json')
 
 
 @app.route('/resume', methods=['GET'])
@@ -441,16 +613,13 @@ def run_flask_app(socketio):
     # loop = asyncio.new_event_loop()
     # asyncio.set_event_loop(loop)
     # loop = asyncio.get_event_loop()
-
     # print("loop----------")
     # print(loop)
-
     # socketio.run(app, debug=True,port=5001)
     app.run(debug=True, port=5001)
 
 
 if __name__ == '__main__':
-    
     # run_observer(socketio)
     # Start the Flask-SocketIO server in a separate thread
     socketio_thread = Thread(target=run_observer(socketio))

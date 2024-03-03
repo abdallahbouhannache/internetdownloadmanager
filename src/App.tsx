@@ -9,6 +9,9 @@ import { Suspense, useEffect, useRef, useState } from "react";
 import { io } from "socket.io-client";
 import { Button } from "react-bootstrap";
 import DownloadWorker from "./Component/Download_worker";
+import useAppState from "./zustand/useAppState";
+import { ToastContainer, toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 // import { useStore } from "zustand";
 
@@ -20,13 +23,16 @@ import {
   Dowload_Actions,
 } from "./Utils/DownLoad_Action";
 
+// import GlobalStates from "./zustand/useAppState";
+
 function App() {
-  const [tableData, settableData] = useState([]);
+  const [tableData, setTableData] = useState([]);
+  // const {tableData, settableData} = globalStates()
 
   // const {  refreshDownloadItem, refreshDownload,initDownloads } =
   //     useAppState();
-
-  // const count = useCountStore(state => state.count);
+  const donwloads = useAppState((state) => state.downloads);
+  const dataTable = Object.values(donwloads);
 
   const refreshData = (json_data: ArrayLike<unknown>) => {
     const data = Object.entries(json_data).map(
@@ -63,13 +69,18 @@ function App() {
   useEffect(() => {
     // initDownloads({})
     downloadActions.StartSessions(socket);
-    socket.current.on("message", (refreshData) => {
-      console.log("refreshData");
-    });
+
+    // socket.current.on("message", (refreshData) => {
+    //   console.log("refreshData");
+    // });
 
     // setTimeout(() => {
     //   downloadActions.Follow_Progress_Item(socket);
     // }, 5000);
+
+    return () => {
+      // Your code here
+    };
   }, []);
 
   console.log("re-rendring the app");
@@ -129,17 +140,18 @@ function App() {
 
   // }, [socketUrl]);
 
+  // if (socket.current.connected) {
+  //   socket.current.emit("progres", "send me updates ");
+  // }
+
   const sendMessage = (message) => {
+    toast("Hello Geeks");
     console.log(message);
-    // if (socket.current.connected) {
-    //   socket.current.emit("progres", "send me updates ");
-    // }
   };
 
   return (
     <Suspense>
       {/* fallback={<Spin size="large" className="layout__loading" />} */}
-
       <div className="App" style={{ border: "1px solid " }}>
         <NavHead />
         <DownloadWorker dwAct={downloadActions} stc={socket.current} />
@@ -147,8 +159,20 @@ function App() {
         <Button variant="primary" onClick={sendMessage}>
           send MSG
         </Button>
+        <ToastContainer
+          position="bottom-right"
+          autoClose={5000}
+          hideProgressBar={false}
+          newestOnTop={false}
+          closeOnClick
+          rtl={false}
+          pauseOnFocusLoss
+          draggable
+          pauseOnHover
+        />
 
-        <DataTable dataTable={tableData} />
+        <DataTable dataTable={dataTable} />
+
         {/* <Confirm /> */}
         {/* <New_Download /> */}
         {/* <Add_Url /> */}

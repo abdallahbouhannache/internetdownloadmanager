@@ -17,6 +17,9 @@ import { CATEGORY_TYPES } from "../Constant/Constant";
 import CopyWrapper from "./copyClipBoard";
 import axios from "axios";
 import { v4 as uuidv4 } from "uuid";
+import { IdmReq } from "../Utils/DownLoad_Action";
+import  { useIdmRequests }  from "../zustand/useAppState";
+
 // import { useFilePicker } from "use-file-picker";
 
 // --------------
@@ -69,7 +72,15 @@ import { v4 as uuidv4 } from "uuid";
 // addDownload(newData);
 // updateDownloadStatus(newData.id, newData.status);
 
-function New_Download({ theUrl, show, startProgress, handleClose }) {
+function New_Download({ theUrl, show, DownloadLater,startProgress, handleClose }) {
+
+  const idmR = IdmReq();
+  // the store manager 
+  const {
+    NewItem,
+    CreateReq
+  } = useIdmRequests();
+
   // var data = {
   //   Url: "",
   //   SavePath: "",
@@ -90,10 +101,10 @@ function New_Download({ theUrl, show, startProgress, handleClose }) {
     Cmd_Option: "new",
     Catg: "UNKNOWN",
     Time_Left: 0,
-    File_Size: 0,
+    File_Size: 10000,
     FileName: "",
     SavePath: "./",
-    Resume: false,
+    Resume: true,
   };
 
   // let defaultDownload = {
@@ -129,7 +140,6 @@ function New_Download({ theUrl, show, startProgress, handleClose }) {
   //   let {file_name,ext}=url.split("/").pop().trim();
   //   // get fileName from downloads state
   //   downloads
-
   // }
 
   const [LocalData, setLocalData] = useState(data);
@@ -183,65 +193,67 @@ function New_Download({ theUrl, show, startProgress, handleClose }) {
     }
   }
 
+  // async function getFileDtailsFront(url) {
+  //   // setshowAdd_Url(!showAdd_Url);
+  //   // setnewDownloadON(!newDownloadON);
+  //   // displayNewDownload(!newDownloadON);
 
-  async function getFileDtailsFront(url) {
-    // setshowAdd_Url(!showAdd_Url);
-    // setnewDownloadON(!newDownloadON);
-    // displayNewDownload(!newDownloadON);
+  //   try {
+  //     let newData = {
+  //       id: "",
+  //       Url: url,
+  //       Status: true,
+  //       Downloaded: 0,
+  //       Speed: 256,
+  //       Cmd_Option: "new",
+  //       Catg: "UNKNOWN",
+  //       Time_Left: 0,
+  //       File_Size: 0,
+  //       FileName: "",
+  //       SavePath: "./",
+  //       Resume: false,
+  //     };
+  //     const response1 = await axios.head(url);
+  //     const contentDisposition = response1.headers["content-disposition"];
+  //     newData["File_Size"] = parseInt(response1.headers["content-length"], 10);
+  //     if (contentDisposition) {
+  //       newData["FileName"] = contentDisposition.split("filename=")[0];
+  //       // here define also download.html
+  //     } else {
+  //       newData["FileName"] = url.split("/").pop().trim();
+  //     }
+  //     let [file_name, ext] = newData["FileName"].split(".") || "download.html"
 
-    try {
-      let newData = {
-        id: "",
-        Url: url,
-        Status: true,
-        Downloaded: 0,
-        Speed: 256,
-        Cmd_Option: "new",
-        Catg: "UNKNOWN",
-        Time_Left: 0,
-        File_Size: 0,
-        FileName: "",
-        SavePath: "./",
-        Resume: false,
-      };
-      const response1 = await axios.head(url);
-      const contentDisposition = response1.headers["content-disposition"];
-      newData["File_Size"] = parseInt(response1.headers["content-length"], 10);
-      if (contentDisposition) {
-        newData["FileName"] = contentDisposition.split("filename=")[0];
-        // here define also download.html
-      } else {
-        newData["FileName"] = url.split("/").pop().trim();
-      }
-      let [file_name, ext] = newData["FileName"].split(".") || "download.html"
+  //     newData["id"] = uuidv4();
+  //     newData["Catg"] = cat_selector(ext);
 
-      newData["id"] = uuidv4();
-      newData["Catg"] = cat_selector(ext);
+  //     const response2 = await axios.get("http://localhost:5001/get_file_name", {
+  //       params: {
+  //         name: file_name,
+  //         ext: ext,
+  //       },
+  //     });
 
-      const response2 = await axios.get("http://localhost:5001/get_file_name", {
-        params: {
-          name: file_name,
-          ext: ext,
-        },
-      });
-      newData["FileName"] = response2.data;
+  //     newData["FileName"] = response2.data;
 
-      setLocalData({ ...newData, Catg: newData["Catg"] });
-    } catch (error) {
-      console.error("Error:fin", error.message);
-    }
+  //     setLocalData({ ...newData, Catg: newData["Catg"] });
+  //   } catch (error) {
+  //     console.error("Error:fin", error.message);
+  //   }
 
-  }
+  // }
 
   useEffect(() => {
     if (theUrl) {
       // console.log(theUrl);
-      setLocalData({ ...data, Url: theUrl });
-      getFileDtailsFront(theUrl);
+      // setLocalData({ ...data, Url: theUrl });
+      // getFileDtailsFront(theUrl);
+      setLocalData({ ...NewItem });
+      // console.log(NewItem);
       // getFileDetails(LocalData);
       // afterOpenModal();
     }
-  }, [theUrl]);
+  }, [theUrl,NewItem]);
 
   // useEffect(() => {
   //   if (LocalData.Url) {
@@ -251,14 +263,14 @@ function New_Download({ theUrl, show, startProgress, handleClose }) {
   // }, [LocalData.Url]);
 
   const handleSavePath = (v) => {
-    console.log(`path set ${v}`);
+    // console.log(`path set ${v}`);
     // data["SavePath"]=v;
     // setLocalData({...LocalData,'SavePath':v})
     // setSelectdPath("./")
   };
 
   const handleCategory = (v) => {
-    console.log(v);
+    // console.log(v);
     setLocalData({ ...LocalData, Catg: v });
     // setCategory(v);
     // data["Catg"]=v;
@@ -278,8 +290,12 @@ function New_Download({ theUrl, show, startProgress, handleClose }) {
   };
 
   const handleLater = () => {
+    console.log(LocalData);
+    setLocalData({ ...LocalData, Status: false });
+    DownloadLater(LocalData);
     console.log("handleLater pressed to add to store and download it later");
   };
+  
 
   const handleDownload = () => {
     // props.showProgresBox();
