@@ -1,6 +1,6 @@
 {
   "compilerOptions": {
-    "target": "ES6",
+    "target": "es2017",
     "allowJs": true,
     "module": "commonjs",
     "jsx": "react-jsx",
@@ -12,6 +12,7 @@
     "outDir": "dist",
     "moduleResolution": "node",
     "resolveJsonModule": true,
+    "types": [ "@types/wicg-file-system-access"],
     "paths": {
       "@src/*": ["*"]
     },

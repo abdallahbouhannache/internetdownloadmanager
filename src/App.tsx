@@ -13,24 +13,15 @@ import useAppState from "./zustand/useAppState";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
-// import { useStore } from "zustand";
-
-// import useCountStore from "./zustand/store";
-
 import {
   Follow_Progress_Item,
   InitSocketSession,
   Dowload_Actions,
 } from "./Utils/DownLoad_Action";
 
-// import GlobalStates from "./zustand/useAppState";
 
 function App() {
-  const [tableData, setTableData] = useState([]);
-  // const {tableData, settableData} = globalStates()
-
-  // const {  refreshDownloadItem, refreshDownload,initDownloads } =
-  //     useAppState();
+  
   const donwloads = useAppState((state) => state.downloads);
   const dataTable = Object.values(donwloads);
 
@@ -61,88 +52,18 @@ function App() {
     autoConnect: false,
   });
 
-  // InitSocketSession(socket);
-  // Follow_Progress_Item(socket);
-
   const downloadActions = Dowload_Actions();
 
   useEffect(() => {
-    // initDownloads({})
     downloadActions.StartSessions(socket);
 
-    // socket.current.on("message", (refreshData) => {
-    //   console.log("refreshData");
-    // });
-
-    // setTimeout(() => {
-    //   downloadActions.Follow_Progress_Item(socket);
-    // }, 5000);
-
     return () => {
-      // Your code here
     };
   }, []);
 
   console.log("re-rendring the app");
 
-  // useEffect(()=>{
-  //   if(Object.keys(downloads).length){
-  //     console.log(downloads);
-  //   }
-  // },[downloads])
-  // useEffect(() => {
-  // socket = io("http://localhost:5001");
-
-  // socket.current.connect();
-
-  // Follow_Progress_Item(socket);
-
-  // Listen for the `connect` event
-  // socket.current.on("connect", () => {
-  //   console.log("Connected to server.");
-  // });
-
-  //   socket.current.on("initData", (initData) => {
-  //     console.log("setting up downloads from server");
-  //     initDownloads(initData)
-  //   });
-
-  //   socket.current.on("progress", (refreshData) => {
-  //     console.log("refreshing data from downloads from server");
-  //     refreshDownload(refreshData)
-  //   });
-
-  //   // Listen for the `progres` event
-  //   socket.current.on("progres", (data) => {
-  //     let nwData = refreshData(data);
-  //     console.log(nwData);
-  //     // let download_sts = Object.entries(data);
-  //     // let download_status = Object.keys(data);
-  //     // console.log(download_sts);
-  //     settableData(nwData);
-  //   });
-
-  //   // Listen for the `message` event
-  //   socket.current.on("message", (msg) => {
-  //     console.log({ msg });
-  //     // let download_status = Object.entries(data);
-  //     // console.log({ received: download_status });
-  //     // setMessages(() => data);
-  //   });
-
-  //   // Send a message
-  //   socket.current.emit("message", "Hello from the FRONTEND!");
-
-  //   return () => {
-  //     socket.current.disconnect();
-  //     console.log("disconnected");
-  //   };
-
-  // }, [socketUrl]);
-
-  // if (socket.current.connected) {
-  //   socket.current.emit("progres", "send me updates ");
-  // }
+  
 
   const sendMessage = (message) => {
     toast("Hello Geeks");

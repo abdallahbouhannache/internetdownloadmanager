@@ -18,79 +18,20 @@ import CopyWrapper from "./copyClipBoard";
 import axios from "axios";
 import { v4 as uuidv4 } from "uuid";
 import { IdmReq } from "../Utils/DownLoad_Action";
-import  { useIdmRequests }  from "../zustand/useAppState";
+import { useIdmRequests } from "../zustand/useAppState";
 
-// import { useFilePicker } from "use-file-picker";
 
-// --------------
-// i need to compare received name of file with
-// names in downloads file of global stats
-// if it matches ,should ask question of do you want restart download
 
-// ------
-// setfname(newData["FileName"]);
-// setNewDownloadData(newData);
-// setprogresID(newData);
-// -----
-
-// console.log(rs.headers["content-length"]);
-// let newData = {
-//   new_url: url,
-//   savePath: "./",
-//   name_file: "",
-//   catg: "UNKNOWN",
-//   size: 0,
-//   speed_limit: 256,
-//   command_option: "new",
-//   downloaded: 0,
-//   Resume: "false",
-// };
-// let newData = {
-//   id: "0",
-//   Url: url,
-//   Status: "completed",
-//   Downloaded: 0,
-//   Speed: 256,
-//   Cmd_Option: "new",
-//   Catg: "UNKNOWN",
-//   Time_Left: 0,
-//   File_Size: 0,
-//   FileName: "",
-//   SavePath: "./",
-//   Resume: false,
-// };
-
-// const id = uuidv4(); // Implement a function to generate a unique ID
-// // newData["FileName"] = getFileExtension(url)
-// newData["FileName"] = url.split("/").pop().trim();
-// newData["File_Size"] = rs.headers["content-length"];
-
-// newData["id"] = id;
-
-// cat_selector("")
-// console.log({"newData":newData});
-// addDownload(newData);
-// updateDownloadStatus(newData.id, newData.status);
-
-function New_Download({ theUrl, show, DownloadLater,startProgress, handleClose }) {
-
+function New_Download({
+  theUrl,
+  show,
+  DownloadLater,
+  startProgress,
+  handleClose,
+}) {
   const idmR = IdmReq();
-  // the store manager 
-  const {
-    NewItem,
-    CreateReq
-  } = useIdmRequests();
-
-  // var data = {
-  //   Url: "",
-  //   SavePath: "",
-  //   FileName: "",
-  //   Catg: "",
-  //   size: "",
-  //   speed_limit: "",
-  //   command_option: "",
-  //   ext: "",
-  // };
+  // the store manager
+  const { NewItem, CreateReq } = useIdmRequests();
 
   var data = {
     id: "",
@@ -107,21 +48,6 @@ function New_Download({ theUrl, show, DownloadLater,startProgress, handleClose }
     Resume: true,
   };
 
-  // let defaultDownload = {
-  //   id: "0",
-  //   Url: "",
-  //   Status: "pending",
-  //   Downloaded: 0,
-  //   Speed: 256,
-  //   Cmd_Option: "new",
-  //   Catg: "UNKNOWN",
-  //   Time_Left: 0,
-  //   File_Size: 0,
-  //   FileName: "",
-  //   SavePath: "./",
-  //   Resume: false,
-  // };
-
   function getFileExtension(url) {
     var match = url.match(/\.[^.]+$/);
     return match ? match[0].substring(1) : "";
@@ -136,153 +62,33 @@ function New_Download({ theUrl, show, DownloadLater,startProgress, handleClose }
     return category ? category[0] : "UNKNOWN";
   };
 
-  // const getFileName=(url:string)=>{
-  //   let {file_name,ext}=url.split("/").pop().trim();
-  //   // get fileName from downloads state
-  //   downloads
-  // }
-
   const [LocalData, setLocalData] = useState(data);
-
-  // const [url, setUrl] = useState(data.Url);
-  // const [selectdPath, setSelectdPath] = useState(data.SavePath);
-  // const [filename, setFilename] = useState(data.FileName);
-  // const [category, setCategory] = useState(data.Catg);
-  // const [fileSize, setFileSize] = useState(data.File_Size);
-
-  // const afterOpenModal = () => {
-  //   // data = props.data;
-  //   // setLocalData(e=>({...e,...props.data}))
-  //   // setLocalData(e=>({...LocalData,...props.data}))
-  //   // setUrl(props.data.Url);
-  //   // setSelectdPath(data.SavePath);
-  //   // setFilename(data.FileName);
-  //   // setFileSize(data.File_Size);
-  //   // console.log({"props.data":props.data});
-  //   // console.log({"localdata":LocalData});
-
-  //   if (theUrl.FileName) {
-  //     console.log(data.FileName);
-  //     let ext = data.FileName.split(".")[1];
-  //     // console.log({ext:ext});
-  //     // console.log({ ext: cat_selector(ext) });
-  //     // setCategory(cat_selector(ext));
-  //     setLocalData({ ...data, Catg: cat_selector(ext) });
-  //   }
-  // };
-
-  async function getFileDetails(file_details) {
-    // setshowAdd_Url(!showAdd_Url);
-    // displayNewDownload(!newDownloadON);
-    try {
-      // const response = axios.head(url);
-      const response = axios.post(
-        "http://localhost:5001/prepare_download_file",
-        file_details
-      );
-      response
-        .then((rs) => {
-          console.log({ response: rs.data });
-          setLocalData({ ...rs.data });
-        })
-        .catch((error) => {
-          console.log({ errr: error });
-        });
-    } catch (error) {
-      console.error("Error:fin", error.message);
-    }
-  }
-
-  // async function getFileDtailsFront(url) {
-  //   // setshowAdd_Url(!showAdd_Url);
-  //   // setnewDownloadON(!newDownloadON);
-  //   // displayNewDownload(!newDownloadON);
-
-  //   try {
-  //     let newData = {
-  //       id: "",
-  //       Url: url,
-  //       Status: true,
-  //       Downloaded: 0,
-  //       Speed: 256,
-  //       Cmd_Option: "new",
-  //       Catg: "UNKNOWN",
-  //       Time_Left: 0,
-  //       File_Size: 0,
-  //       FileName: "",
-  //       SavePath: "./",
-  //       Resume: false,
-  //     };
-  //     const response1 = await axios.head(url);
-  //     const contentDisposition = response1.headers["content-disposition"];
-  //     newData["File_Size"] = parseInt(response1.headers["content-length"], 10);
-  //     if (contentDisposition) {
-  //       newData["FileName"] = contentDisposition.split("filename=")[0];
-  //       // here define also download.html
-  //     } else {
-  //       newData["FileName"] = url.split("/").pop().trim();
-  //     }
-  //     let [file_name, ext] = newData["FileName"].split(".") || "download.html"
-
-  //     newData["id"] = uuidv4();
-  //     newData["Catg"] = cat_selector(ext);
-
-  //     const response2 = await axios.get("http://localhost:5001/get_file_name", {
-  //       params: {
-  //         name: file_name,
-  //         ext: ext,
-  //       },
-  //     });
-
-  //     newData["FileName"] = response2.data;
-
-  //     setLocalData({ ...newData, Catg: newData["Catg"] });
-  //   } catch (error) {
-  //     console.error("Error:fin", error.message);
-  //   }
-
-  // }
 
   useEffect(() => {
     if (theUrl) {
-      // console.log(theUrl);
-      // setLocalData({ ...data, Url: theUrl });
-      // getFileDtailsFront(theUrl);
       setLocalData({ ...NewItem });
-      // console.log(NewItem);
-      // getFileDetails(LocalData);
-      // afterOpenModal();
     }
-  }, [theUrl,NewItem]);
+  }, [theUrl, NewItem]);
 
-  // useEffect(() => {
-  //   if (LocalData.Url) {
-  //     // getFileDetails(LocalData);
-  //     getFileDtailsFront(LocalData.Url)
-  //   }
-  // }, [LocalData.Url]);
-
-  const handleSavePath = (v) => {
+  const handleSavePath = async (v) => {
     // console.log(`path set ${v}`);
     // data["SavePath"]=v;
     // setLocalData({...LocalData,'SavePath':v})
     // setSelectdPath("./")
+    console.log("handleSavePath");
+    try {
+      const dirHandle = await window.showDirectoryPicker();
+      
+      setLocalData({ ...LocalData, SavePath: dirHandle.name });
+      // document.getElementById('fileOpener').value = dirHandle.name; // Display directory name
+    } catch (err) {
+      console.error("Failed to access directory:", err);
+    }
   };
 
   const handleCategory = (v) => {
-    // console.log(v);
     setLocalData({ ...LocalData, Catg: v });
-    // setCategory(v);
-    // data["Catg"]=v;
-    // data['Catg']="dddddddd"
   };
-
-  // const handleDirectoryChange = (event) => {
-  //   const selectedFile = event.target.files[0];
-  //   if (selectedFile.type === "directory") {
-  //     setSelectdPath(selectedFile.path);
-  //   }
-  // };
 
   const handleCancel = () => {
     console.log("handleCancel pressed");
@@ -295,24 +101,9 @@ function New_Download({ theUrl, show, DownloadLater,startProgress, handleClose }
     DownloadLater(LocalData);
     console.log("handleLater pressed to add to store and download it later");
   };
-  
 
   const handleDownload = () => {
-    // props.showProgresBox();
-    // data={
-    //   url
-    //   selectdPath
-    //   filename
-    //   category
-    //   fileSize
-    // }
-
-    // console.log({"props":props.data});
-    // console.log({LocalData});
-
-    // getFileDetails(LocalData);
     startProgress(LocalData);
-
     console.log("start download btn pressed");
   };
 
@@ -341,18 +132,55 @@ function New_Download({ theUrl, show, DownloadLater,startProgress, handleClose }
               />
             </Col>
           </Row>
-          <Row className="pb-3 justify-content-center">
-            <Form.Group xs={"9"} as={Col} controlId="fileOpener">
+          <Row className=" align-items-center justify-content-center pb-3 row">
+            {/* <Form.Group className="mb-3" xs={"9"} as={Col} >
+              <InputGroup.Text id="basic-addon1" onClick={()=>alert("sss")}
+              onChange={(e) => handleSavePath(e.target.value)}>
+              Select path
+              </InputGroup.Text>
+              <Form.Control
+                  size="sm"
+                  onChange={(e) => handleSavePath(e.target.value)}
+                  type="text"
+                />
+            </Form.Group> */}
+
+            {/* <Form.Group xs={"9"} as={Col} controlId="fileOpener">
+              <InputGroup.Text id="basic-addon1" onClick={()=>alert("sss")}
+                onChange={(e) => handleSavePath(e.target.value)}>
+                Select path
+              </InputGroup.Text>
               <Form.Control
                 size="sm"
                 onChange={(e) => handleSavePath(e.target.value)}
-                type="file"
-                accept=".txt"
+                type="text"
               />
             </Form.Group>
             <Col xs={"auto"}>
               <Save />
+            </Col> */}
+            <Col xs={"auto"} className="m-0 p-0">
+              <Button className="" onClick={(v) => handleSavePath(v)}>
+                Browse
+              </Button>
             </Col>
+            <Form.Group className=" m-0 p-0" xs={"7"} as={Col}>
+              {/* controlId="fileOpener" */}
+              <Form.Control
+                as={Col}
+                size="sm"
+                value={LocalData.SavePath}
+                type="text"
+                id="fileOpener" // Ensure this ID matches the getElementById call in selectDirectory
+              >
+                {LocalData.SavePath}
+              </Form.Control>
+            </Form.Group>
+
+            <Col xs={"auto"}>
+              <Save />
+            </Col>
+            
           </Row>
           <Row className="pb-3 justify-content-center">
             <Form.Group xs={"9"} as={Col} controlId="categorySelect">

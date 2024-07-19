@@ -1,11 +1,4 @@
-// export const CATEGORY_TYPES = {
-//     COMPRESSED: 'compressed',
-//     DOCUMENT: 'document',
-//     VIDEO: 'video',
-//     AUDIO: 'audio',
-//     UNKNOWN: 'unknown',
-//   } as const;
-  
+
 export  const CATEGORY_TYPES = {
     COMPRESSED: ['zip', 'rar', '7z', 'tar', 'gz'],
     DOCUMENT: ['doc', 'docx', 'pdf', 'txt', 'xls', 'xlsx', 'ppt', 'pptx'],

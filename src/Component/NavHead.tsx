@@ -3,21 +3,15 @@ import Nav from "react-bootstrap/Nav";
 import Navbar from "react-bootstrap/Navbar";
 import NavDropdown from "react-bootstrap/NavDropdown";
 import Button from "react-bootstrap/Button";
-import Form from "react-bootstrap/Form";
 import { useState } from "react";
 import Image from "react-bootstrap/Image";
-import New_Download from "./New_Download";
-import Add_Url from "./Add_Url";
-import Download_Progress from "./Download_Progress";
+import Play from "../assets/play-button.png";
 import logo from "../assets/download.gif";
 import Add from "../assets/add-file.png";
 import Stop from "../assets/stop (1).png";
 import Recyle from "../assets/waste.png";
-import Play from "../assets/play-button.png";
-import io from "socket.io-client";
 import axios from "axios";
-import { CATEGORY_TYPES } from "../Constant/Constant";
-import useAppState, { useIdmRequests, useWindowsStore } from "../zustand/useAppState";
+import { useIdmRequests, useWindowsStore } from "../zustand/useAppState";
 import { IdmReq } from "../Utils/DownLoad_Action";
 import { useStore } from "zustand";
 
@@ -55,59 +49,14 @@ function NavHead() {
 
   const { CurrentRow, SetCurrentRow } = useIdmRequests((state) => state);
   const idmR = IdmReq();
-  
-  const { fname } = useAppState();
-
-  const [searchTerm, setSearchTerm] = useState("");
-
-  // const [newDownloadON, displayNewDownload] = useState(false);
-  // const [showProgress, setshowProgress] = useState(false);
-  // const [showAdd_Url, setshowAdd_Url] = useState(false);
   const [nwDownload, setNewDownload] = useState(defaultDownload);
-  const handleClose = () => displayProgress(false);
-  const Close_New_Down = () => displayNewDownload(false);
-  const Close_Add_url = () => displayAddUrl(false);
-
-  // var socket=null;
-  // const response =  fetch(
-  //   url,
-  //   {
-  //     method: "GET",
-  //     mode: "no-cors",
-  //     credentials: 'same-origin',
-  //   },
-  // );
-  // const instance = axios.create({
-  //   headers: {
-  //     method: "GET",
-  //     mode: "no-cors",
-  //     "Access-Control-Allow-Origin": "*",
-  //     // "Content-Type": "application/json",
-  //     credentials: 'same-origin',
-  //     withCredentials: true,
-  //   },
-  // });
-  // const res = instance.get(url);
-
-  // const inst = axios.create({
-  //   withCredentials: true,
-  //   headers: {
-  //     mode: "no-cors",
-  //     'Access-Control-Allow-Origin' : '*',
-  //     'Access-Control-Allow-Methods':'GET,PUT,POST,DELETE,PATCH,OPTIONS',
-  //     }
-  // });
-
+  
   async function getFileDetails(url) {
-    // setshowAdd_Url(!showAdd_Url);
-    // setnewDownloadON(!newDownloadON);
     displayNewDownload(!newDownloadON);
     try {
       const response = axios.head(url);
       response
         .then((rs) => {
-          // console.log(rs);
-          // console.log(rs.headers["content-length"]);
           let newData = {
             new_url: url,
             savePath: "./",
@@ -122,7 +71,6 @@ function NavHead() {
           newData["name_file"] = url.split("/").pop();
           newData["size"] = rs.headers["content-length"];
 
-          // cat_selector("")
           setNewDownload(newData);
         })
         .catch((error) => {
@@ -133,46 +81,8 @@ function NavHead() {
     }
   }
 
-  const handleFilterClick = () => {
-    // Perform filtering logic here based on searchTerm, filter1, and filter2
-    // Update the table data accordingly
-  };
-
-  // function connectSocket() {
-  //   socket = io("http://localhost:5001");
-
-  //   // Listen for the `connect` event
-  //   socket.on("connect", () => {
-  //     console.log("Connected to server.");
-  //   });
-
-  //   // Listen for the `message` event
-  //   socket.on("message", (data) => {
-  //     console.log(`Received message: ${data}`);
-  //   });
-
-  //   // Send a message
-  //   socket.emit("message", "Hello from the client!");
-
-  //   // Close the connection
-  //   // setTimeout(() => {
-  //   //   socket.disconnect();
-  //   // }, 5000000);
-  // }
-
   const handleAddClick = () => {
-    // setshowAdd_Url(!showAdd_Url);
     displayAddUrl(!addUrlON);
-
-    // if(socket){
-    //   socket.disconnect();
-    // }
-    // connectSocket();
-    // startNewDownload
-    // getFileDetails(nwDownload.new_url);
-    // setshowAdd_Url(!showAdd_Url)
-    // setshowProgress(!showProgress);
-    // setnewDownloadON(!newDownloadON);
     console.log("open download");
   };
 
@@ -187,8 +97,7 @@ function NavHead() {
   };
 
   const handleStopClick = () => {
-    // let xd = { filename: fname };
-    // console.log("stop 3 clicked to stop", { xd });
+    
     console.log(CurrentRow);
     const par={}
     par['rows']=[CurrentRow]
@@ -196,11 +105,7 @@ function NavHead() {
       idmR.StopItems(par)
     }
     console.log("stop clicked");
-    // axios
-    //   .post("http://localhost:5001/stop", xd)
-    //   .then((response) =>
-    //     console.log({ download_file_server_response: response })
-    //   );
+    
   };
 
   const handleRemoveItems = () => {
@@ -210,8 +115,7 @@ function NavHead() {
       idmR.DelItems(par)
     }
     console.log("selected item has been removed");
-    // par['many']=true
-    // idmR.DelItem(SelectedRow)
+
   };
 
   const handleDelAll = () => {
@@ -219,44 +123,12 @@ function NavHead() {
     par['all']=true
     idmR.DelItems(par)
     console.log("all items has been removed");
-    // // "selectedMultiple"
-    // if(true){
-    //   // delete selected files
-    //   par['all']=false
-    // }else{
-    //   // delete  all files
-    // }
+    
   };
 
-  // let xurl =
-  //   "https://www.win-rar.com/fileadmin/winrar-versions/winrar/winrar-x64-623.exe";
+  
   return (
     <>
-      {/* {showAdd_Url && (
-        <Add_Url
-          url={xurl}
-          show={showAdd_Url}
-          handleClose={Close_Add_url}
-          openNewDownload={getFileDetails}
-        />
-      )}
-      {newDownloadON && (
-        <New_Download
-          data={nwDownload}
-          show={newDownloadON}
-          showProgresBox={()=>setshowProgress(!showProgress)}
-          handleClose={Close_New_Down}
-        />
-      )}
-
-      {showProgress && (
-        <Download_Progress
-          downloadDetails={defaultDownload}
-          show={showProgress}
-          handleClose={handleClose}
-        />
-      )} */}
-
       <Navbar className="bg-body-tertiary" bg="light" data-bs-theme="light">
         <Container>
           <Navbar.Brand href="#home">Download Manager</Navbar.Brand>

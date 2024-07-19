@@ -31,61 +31,7 @@ class FileChangeHandler(FileSystemEventHandler):
             downloads_state = bson.loads(bson_data)
             self.socketio.emit('progres', downloads_state)
 
-    # async def on_modified(self, event):
-        
-    #     if not event.is_directory:
-    #         if event.src_path=="./download_state.bson":
-    #             file_path = event.src_path
-    #             try:
-    #                 # print(file_path)
-    #                 # self.socketio.emit('progres', {"dat":'yes progres am here:sent from backend'})
-    #                 # socketio.emit('message', "edited file")
-    #                 async with aiofiles.open(file_path, mode='rb') as state_file:
-    #                     print('reading the file')
-    #                     bson_data =await state_file.read()
-    #                     downloads_state = bson.loads(bson_data)
-    #                     self.socketio.emit('progres', downloads_state)
-
-                    # with open(file_path, 'rb') as file:
-                    #     bson_data = file.read()
-                    #     downloads_state = bson.loads(bson_data)
-                    #     self.socketio.emit('progres', downloads_state)
-                        
-    #             # Decode BSON data
-    #             except Exception as e:
-    #                 print(f"Error reading file or emitting data: {e}")
-
-            # with open(file_path, 'rb') as file:
-            #      socketio.emit('message', file.read())
-                #  socketio.emit('file_upload', file.read())
-                # patch = jsonpatch.make_patch(self.old_state, new_state)
-
-
-            # Send the file to the client using WebSocket
-            # Your code to send the file goes here
-
-# app_path = os.path.dirname(os.path.abspath(__file__))
-
-# def Init(app):
-#     if os.path.exists(save_state_file):
-#         # Read BSON data from a file
-#         with open(save_state_file, 'wb') as state_file:
-#             # Convert JSON to BSON
-#             bson_data = bson.dumps(downloads)
-#             state_file.write(bson_data)
-#         with open("./download_state.bson", 'rb') as file:
-#             bson_data = file.read()
-#             # Decode BSON data
-#             downloads_state = bson.loads(bson_data)
-
-
 def start_observer(socketio):
-    # print("OBSERVER RUNNING OK ----->")
-    # observer = Observer()
-    # event_handler = FileChangeHandler(socketio,loop)
-    # observer.schedule(event_handler, path='./', recursive=True)
-    # observer.start()
-
     @socketio.on('connect')
     def handle_connect():
         # start_observer(socketio)
@@ -118,25 +64,11 @@ def start_observer(socketio):
     def handle_message(msg):
         print('socket backend : Received message ', msg)
         socketio.emit('message', 'yes am here:sent from backend')
-    
-    # @socketio.on('connect')
-    # def on_connect():
-    #     start_observer(socketio)
-
-    # @socketio.on('disconnect')
-    # def on_disconnect():
-    #     observer.stop()
-    #     observer.join()
-
-# if __name__ == '__main__':
-#     # socketio.run(app)
-
-
 
 def run_observer(socketio):
+    start_observer(socketio)
     # socketio = SocketIO(app)
     # socketio = SocketIO(app,cors_allowed_origins="*")
-    start_observer(socketio)
     # socketio.run(app, debug=True,port=5001)
     # loop = asyncio.get_event_loop()
     # loop.run_forever()

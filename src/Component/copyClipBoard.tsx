@@ -10,8 +10,6 @@ function CopyWrapper({ text, child }) {
 
   const handleCopy = () => {
     copy(text);
-    // setShowTooltip(true);
-    // setTimeout(() => setShowTooltip(false), 150);
     setTimeout(() => {
       copy('');
     }, 5000);

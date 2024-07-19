@@ -1,3 +1,522 @@
+https://www.win-rar.com/fileadmin/winrar-versions/winrar/winrar-x64-623.exe
+
+
+
+-------------
+google genrativ ai
+----------------------------------------------------------------------------------------------------
+@app.route('/download_file', methods=['POST'])
+async def download_file():
+    # myresponse = app.make_response()
+    # myresponse.headers.add('Access-Control-Allow-Origin', 'http://localhost:3000')
+    # myresponse.headers.add('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE')
+    # myresponse.headers.add('Access-Control-Allow-Headers', 'Content-Type')
+    print("starting download_file")
+    file_infos = request.get_json()
+
+    id = file_infos.get('id') or None
+    # if not id:
+    #     file_infos=await download_header()
+    #     id = file_infos.get('id')
+    
+    file_url = file_infos.get('Url') or None
+    file_name = file_infos.get('FileName') or None
+    Catg=file_infos.get('Catg') or "UNKNOWN"
+    speed_limit = file_infos.get('Speed') or None
+    downloaded_size = file_infos.get('Downloaded') or 0
+    save_dir = file_infos.get('SavePath') or "./"
+    command = file_infos.get('Cmd_Option') or "new" # values continue,restart,new
+    save_state_file = os.path.join(save_dir, 'download_state.bson')
+    file_save_path = os.path.join(save_dir, file_name)
+    file_size = file_infos.get('File_Size')
+
+    global downloads
+
+    # # URL of the file you want to download
+    # file_url = 'https://example.com/file_url'
+    # # Path where you want to save the downloaded file
+    # file_save_path = '/path/to/save/file.ext'
+    # # Speed limit in bytes per second
+    # speed_limit = 1024  # 1KB/s
+    # byte_range = 0
+    # # Load the start byte from the state file, if it exists
+    # if os.path.exists(save_state_file):
+    #     with open(save_state_file, 'r') as state_file:
+    #         state = json.load(state_file)
+    #     byte_range = int(state['Downloaded'])
+    # save_state_file = not save_state_file and os.path.join(save_dir, 'download_state.json')
+    # print({"filebrf":file_name})
+    # file_name = not file_name or os.path.basename(file_url)   
+    # Get the filename from the response headers
+    # if not file_name :
+    #     res = requests.get(file_url)
+    #     content_disposition = res.headers.get('Content-Disposition')
+    #     file_name = get_filename_from_content_disposition(content_disposition) 
+
+    # size_of_file=0
+    # Load the state from the save_state_file, if it exists
+    if os.path.exists(save_state_file):
+        async with aiofiles.open(save_state_file, mode='rb') as state_file:
+            print('reading the file')
+            bson_data =await state_file.read()
+            # bson_data = bson.dumps(downloads)
+            # await state_file.write(bson_data)
+        # Read BSON data from a file
+        # with open(save_state_file, 'rb') as file:
+        #     bson_data = file.read()
+        # Decode BSON data
+        downloads = bson.loads(bson_data)
+        # with open(save_state_file, 'r') as state_file:
+        #         downloads = json.load(state_file)
+    file_save_path = os.path.join(save_dir, file_name)   
+    # Create a unique state entry for each download
+    # if file_name not in downloads :
+    #     downloads[file_name] = {'Downloaded': 0, 'Status': True}
+
+    # downloads[file_name] = {'Downloaded': 0, 'Status': True}
+
+    if os.path.exists(file_save_path) :
+        downloaded_size=os.path.getsize(file_save_path)
+        if command=="restart":
+            os.remove(file_save_path)
+
+        # elif command=="continue":
+        #     downloaded_size=os.path.getsize(file_save_path)
+            
+        #     # if size_of_file:
+        #     #     downloads[file_name]['Downloaded']=size_of_file  
+        #     print("continue download of file_name from Downloaded ****")
+
+        # elif command=="new":
+        #     # # verify if not a continue|resume request ...
+        #     # [file_name,ext]=file_name.split('.')
+        #     # pattern = re.compile(f'^{re.escape(file_name)}(\(\d+\))?.{re.escape(ext)}$')
+        #     # content_dir=os.listdir(save_dir)
+        #     # # print(content_dir)
+        #     # # file_count=content_dir.count(pattern)
+        #     # matching_files = [f for f in content_dir if pattern.match(f)]
+        #     # file_count = len(matching_files)
+        #     # # print(file_name,ext)
+        #     # # print(f'file_count {file_count}')
+        #     # file_name=f'{file_name}({file_count+1}).{ext}'
+        #     file_save_path = os.path.join(save_dir, file_name)
+
+    # "last_byte": size_of_file,
+    # "running": True,
+
+    downloads[file_name] = {
+    "id": id,
+    "Url": file_url,
+    "Status": True,
+    "Downloaded": downloaded_size,
+    "Cmd_Option": command,
+    "Speed": speed_limit,
+    "Catg":Catg,
+    "FileName":file_name,
+    "Time_Left": 0,
+    "File_Size": file_size,
+    "SavePath": save_dir,
+    "Resume": False,
+    }
+
+    # socketio.emit('filed', downloads[file_name])
+    
+    # if os.path.exists(file_save_path):
+    #     if os.path.getsize(file_save_path):
+    #         downloads[file_name]['Downloaded']=os.path.getsize(file_save_path)
+
+    # print(downloads)
+
+    # return 
+    # headers = {'Range': 'bytes={}-'.format(byte_range)}
+    # headers={'Range': f'bytes={byte_range}-{file_size}'}   
+    # Construct the headers using the byte range
+    byte_range = downloads[file_name]['Downloaded']
+    headers={'Range': f'bytes={byte_range}-'}
+  
+    async with aiohttp.ClientSession() as session:
+        async with session.get(file_url,headers=headers) as response:
+            # timer = time.time()
+
+            # file_name = os.path.basename(file_url) if not file_name else ""
+            # # Get the filename from the response headers
+            # if not file_name :
+            #     content_disposition = response.headers.get('Content-Disposition')
+            #     file_name = get_filename_from_content_disposition(content_disposition)
+
+            # verify if not a continue|resume request ...
+            # if not byte_range:
+            #     [file_name,ext]=file_name.split('.')
+            #     pattern = re.compile(f'^{re.escape(file_name)}(\(\d+\))?.{re.escape(ext)}$')
+            #     content_dir=os.listdir(save_dir)
+            #     # print(content_dir)
+            #     # file_count=content_dir.count(pattern)
+            #     matching_files = [f for f in content_dir if pattern.match(f)]
+            #     file_count = len(matching_files)
+            #     # print(file_name,ext)
+            #     # print(f'file_count {file_count}')
+            #     file_name=f'{file_name}({file_count+1}).{ext}'
+            #     file_save_path = os.path.join(save_dir, file_name)
+
+            # print(f'tobesaved_as_file_name={file_name}')
+            # print(file_name)
+
+            # file_size = int(response.headers.get('Content-Length'))
+
+            # Get the file size from the response headers
+            file_size = int(response.headers.get('Content-Length', 0))
+            if not downloads[file_name]['File_Size']==file_size:
+                downloads[file_name]['File_Size']=file_size
+
+            # print(get_file_size(file_size))
+
+            # Calculate the number of chunks based on the speed limit
+            # chunk_size = min(speed_limit, 1024*1024)
+            chunk_size=500 * 1024 
+            num_chunks = file_size // chunk_size
+
+            # print(f'chunks {num_chunks} with chunk size  {get_file_size(chunk_size)} ')
+            # Create a list to store the tasks for parallel downloading
+            tasks = []
+
+            # downloaded_size = 0
+
+            # Download the file in chunks asynchronously
+            # for i in range(num_chunks):
+
+            while downloaded_size < file_size :
+                # # Check if the download has been stopped
+                # if file_name in downloads and not downloads[file_name]['Status']:
+                #     break
+                # Check if the download has been stopped
+                if not downloads[file_name]['Status']:
+                    with open(save_state_file, mode='wb') as state_file:
+                        print('Starting the file write')
+                        bson_data = bson.dumps(downloads)
+                        state_file.write(bson_data)
+                        break
+
+                    # with open(save_state_file, 'wb') as state_file:
+                    #     # Convert JSON to BSON
+                    #     bson_data = bson.dumps(downloads)
+                    #     state_file.write(bson_data)
+                    #     # state_file.write('\n')
+                    #     # json.dump(downloads, state_file)
+                    # break
+                
+                # Read a chunk of data from the response
+                data = await response.content.read(256)
+
+                # if not data:
+                #     # Download is complete  
+                #     downloads.pop(file_name)
+                #     # if os.path.exists(save_state_file):
+                #     #     os.remove(save_state_file)
+                #     print("exited cause file downloading finish ,removed from download_state.json")
+                #     break
+
+                # Update the byte range
+                byte_range += len(data)
+                downloads[file_name]['Downloaded']=byte_range
+
+                socketio.emit('progres', downloads)
+                print(f'downloading --{byte_range}')
+                print(downloads)
+                # print(f'downloaded :--->{get_file_size(chunk_size)}')
+
+
+                # Create a task to write the chunk to the file
+                task = asyncio.create_task(write_chunk_to_file(file_save_path,data,file_name,save_state_file,downloaded_size))
+                tasks.append(task)
+                
+
+                # print(f'All tasks completed in {time.time() - timer}s')
+
+
+                # task = asyncio.ensure_future(write_chunk_to_file(file_save_path,data))
+                # task.add_done_callback(coroutine())
+                # tasks.append(task)
+
+                # Delay between chunks to limit the download speed
+                await asyncio.sleep(1)
+                # file_size_on_disk=os.path.getsize(file_save_path)
+
+            # Download the remaining bytes
+            # remaining_bytes = file_size % chunk_size
+            # data = await response.content.read(remaining_bytes)
+            # task = asyncio.create_task(write_chunk_to_file(file_save_path,data,file_name,save_state_file,file_size_on_disk))
+            # tasks.append(task)
+
+            # Wait for all tasks to complete
+            # await asyncio.gather(*tasks)
+
+    return f"File {file_name}  Download finish"
+---------------------------------------------------------------------------------------------------------
+
+-----------------------------------------------------------------------------
+-----------------------------------------------------------------------------
+
+
+
+
+@app.route('/download_file', methods=['POST'])
+async def download_file():
+    # myresponse = app.make_response()
+    # myresponse.headers.add('Access-Control-Allow-Origin', 'http://localhost:3000')
+    # myresponse.headers.add('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE')
+    # myresponse.headers.add('Access-Control-Allow-Headers', 'Content-Type')
+    print("starting download_file")
+    file_infos = request.get_json()
+
+    id = file_infos.get('id') or None
+    # if not id:
+    #     file_infos=await download_header()
+    #     id = file_infos.get('id')
+    
+    file_url = file_infos.get('Url') or None
+    file_name = file_infos.get('FileName') or None
+    Catg=file_infos.get('Catg') or "UNKNOWN"
+    speed_limit = file_infos.get('Speed') or None
+    downloaded_size = file_infos.get('Downloaded') or 0
+    save_dir = file_infos.get('SavePath') or "./"
+    command = file_infos.get('Cmd_Option') or "new" # values continue,restart,new
+    save_state_file = os.path.join(save_dir, 'download_state.bson')
+    file_save_path = os.path.join(save_dir, file_name)
+    file_size = file_infos.get('File_Size')
+
+    global downloads
+
+    # # URL of the file you want to download
+    # file_url = 'https://example.com/file_url'
+    # # Path where you want to save the downloaded file
+    # file_save_path = '/path/to/save/file.ext'
+    # # Speed limit in bytes per second
+    # speed_limit = 1024  # 1KB/s
+    # byte_range = 0
+    # # Load the start byte from the state file, if it exists
+    # if os.path.exists(save_state_file):
+    #     with open(save_state_file, 'r') as state_file:
+    #         state = json.load(state_file)
+    #     byte_range = int(state['Downloaded'])
+    # save_state_file = not save_state_file and os.path.join(save_dir, 'download_state.json')
+    # print({"filebrf":file_name})
+    # file_name = not file_name or os.path.basename(file_url)   
+    # Get the filename from the response headers
+    # if not file_name :
+    #     res = requests.get(file_url)
+    #     content_disposition = res.headers.get('Content-Disposition')
+    #     file_name = get_filename_from_content_disposition(content_disposition) 
+
+    # size_of_file=0
+    # Load the state from the save_state_file, if it exists
+    if os.path.exists(save_state_file):
+        async with aiofiles.open(save_state_file, mode='rb') as state_file:
+            print('reading the file')
+            bson_data =await state_file.read()
+            # bson_data = bson.dumps(downloads)
+            # await state_file.write(bson_data)
+        # Read BSON data from a file
+        # with open(save_state_file, 'rb') as file:
+        #     bson_data = file.read()
+        # Decode BSON data
+        downloads = bson.loads(bson_data)
+        # with open(save_state_file, 'r') as state_file:
+        #         downloads = json.load(state_file)
+    file_save_path = os.path.join(save_dir, file_name)   
+    # Create a unique state entry for each download
+    # if file_name not in downloads :
+    #     downloads[file_name] = {'Downloaded': 0, 'Status': True}
+
+    # downloads[file_name] = {'Downloaded': 0, 'Status': True}
+
+    if os.path.exists(file_save_path) :
+        downloaded_size=os.path.getsize(file_save_path)
+        if command=="restart":
+            os.remove(file_save_path)
+
+        # elif command=="continue":
+        #     downloaded_size=os.path.getsize(file_save_path)
+            
+        #     # if size_of_file:
+        #     #     downloads[file_name]['Downloaded']=size_of_file  
+        #     print("continue download of file_name from Downloaded ****")
+
+        # elif command=="new":
+        #     # # verify if not a continue|resume request ...
+        #     # [file_name,ext]=file_name.split('.')
+        #     # pattern = re.compile(f'^{re.escape(file_name)}(\(\d+\))?.{re.escape(ext)}$')
+        #     # content_dir=os.listdir(save_dir)
+        #     # # print(content_dir)
+        #     # # file_count=content_dir.count(pattern)
+        #     # matching_files = [f for f in content_dir if pattern.match(f)]
+        #     # file_count = len(matching_files)
+        #     # # print(file_name,ext)
+        #     # # print(f'file_count {file_count}')
+        #     # file_name=f'{file_name}({file_count+1}).{ext}'
+        #     file_save_path = os.path.join(save_dir, file_name)
+
+    # "last_byte": size_of_file,
+    # "running": True,
+
+    downloads[file_name] = {
+    "id": id,
+    "Url": file_url,
+    "Status": True,
+    "Downloaded": downloaded_size,
+    "Cmd_Option": command,
+    "Speed": speed_limit,
+    "Catg":Catg,
+    "FileName":file_name,
+    "Time_Left": 0,
+    "File_Size": file_size,
+    "SavePath": save_dir,
+    "Resume": False,
+    }
+
+    # socketio.emit('filed', downloads[file_name])
+    
+    # if os.path.exists(file_save_path):
+    #     if os.path.getsize(file_save_path):
+    #         downloads[file_name]['Downloaded']=os.path.getsize(file_save_path)
+
+    # print(downloads)
+
+    # return 
+    # headers = {'Range': 'bytes={}-'.format(byte_range)}
+    # headers={'Range': f'bytes={byte_range}-{file_size}'}   
+    # Construct the headers using the byte range
+    byte_range = downloads[file_name]['Downloaded']
+    headers={'Range': f'bytes={byte_range}-'}
+  
+    async with aiohttp.ClientSession() as session:
+        async with session.get(file_url,headers=headers) as response:
+            # timer = time.time()
+
+            # file_name = os.path.basename(file_url) if not file_name else ""
+            # # Get the filename from the response headers
+            # if not file_name :
+            #     content_disposition = response.headers.get('Content-Disposition')
+            #     file_name = get_filename_from_content_disposition(content_disposition)
+
+            # verify if not a continue|resume request ...
+            # if not byte_range:
+            #     [file_name,ext]=file_name.split('.')
+            #     pattern = re.compile(f'^{re.escape(file_name)}(\(\d+\))?.{re.escape(ext)}$')
+            #     content_dir=os.listdir(save_dir)
+            #     # print(content_dir)
+            #     # file_count=content_dir.count(pattern)
+            #     matching_files = [f for f in content_dir if pattern.match(f)]
+            #     file_count = len(matching_files)
+            #     # print(file_name,ext)
+            #     # print(f'file_count {file_count}')
+            #     file_name=f'{file_name}({file_count+1}).{ext}'
+            #     file_save_path = os.path.join(save_dir, file_name)
+
+            # print(f'tobesaved_as_file_name={file_name}')
+            # print(file_name)
+
+            # file_size = int(response.headers.get('Content-Length'))
+
+            # Get the file size from the response headers
+            file_size = int(response.headers.get('Content-Length', 0))
+            if not downloads[file_name]['File_Size']==file_size:
+                downloads[file_name]['File_Size']=file_size
+
+            # print(get_file_size(file_size))
+
+            # Calculate the number of chunks based on the speed limit
+            # chunk_size = min(speed_limit, 1024*1024)
+            chunk_size=500 * 1024 
+            num_chunks = file_size // chunk_size
+
+            # print(f'chunks {num_chunks} with chunk size  {get_file_size(chunk_size)} ')
+            # Create a list to store the tasks for parallel downloading
+            tasks = []
+
+            # downloaded_size = 0
+
+            # Download the file in chunks asynchronously
+            # for i in range(num_chunks):
+
+            while downloaded_size < file_size :
+                # # Check if the download has been stopped
+                # if file_name in downloads and not downloads[file_name]['Status']:
+                #     break
+                # Check if the download has been stopped
+                if not downloads[file_name]['Status']:
+                    with open(save_state_file, mode='wb') as state_file:
+                        print('Starting the file write')
+                        bson_data = bson.dumps(downloads)
+                        state_file.write(bson_data)
+                        break
+
+                    # with open(save_state_file, 'wb') as state_file:
+                    #     # Convert JSON to BSON
+                    #     bson_data = bson.dumps(downloads)
+                    #     state_file.write(bson_data)
+                    #     # state_file.write('\n')
+                    #     # json.dump(downloads, state_file)
+                    # break
+                
+                # Read a chunk of data from the response
+                data = await response.content.read(256)
+
+                # if not data:
+                #     # Download is complete  
+                #     downloads.pop(file_name)
+                #     # if os.path.exists(save_state_file):
+                #     #     os.remove(save_state_file)
+                #     print("exited cause file downloading finish ,removed from download_state.json")
+                #     break
+
+                # Update the byte range
+                byte_range += len(data)
+                downloads[file_name]['Downloaded']=byte_range
+
+                socketio.emit('progres', downloads)
+                print(f'downloading --{byte_range}')
+                print(downloads)
+                # print(f'downloaded :--->{get_file_size(chunk_size)}')
+
+
+                # Create a task to write the chunk to the file
+                task = asyncio.create_task(write_chunk_to_file(file_save_path,data,file_name,save_state_file,downloaded_size))
+                tasks.append(task)
+                
+
+                # print(f'All tasks completed in {time.time() - timer}s')
+
+
+                # task = asyncio.ensure_future(write_chunk_to_file(file_save_path,data))
+                # task.add_done_callback(coroutine())
+                # tasks.append(task)
+
+                # Delay between chunks to limit the download speed
+                await asyncio.sleep(1)
+                # file_size_on_disk=os.path.getsize(file_save_path)
+
+            # Download the remaining bytes
+            # remaining_bytes = file_size % chunk_size
+            # data = await response.content.read(remaining_bytes)
+            # task = asyncio.create_task(write_chunk_to_file(file_save_path,data,file_name,save_state_file,file_size_on_disk))
+            # tasks.append(task)
+
+            # Wait for all tasks to complete
+            # await asyncio.gather(*tasks)
+
+    return f"File {file_name}  Download finish"
+----------------------------------------------------------------------------------------------------
+
+
+
+
+
+
+
+
+
+
+
 const reader = new FileReader();
 
   // async function createBlobFromFilePath(filePath) {
@@ -955,8 +1474,1861 @@ def run(app):
             // displayNewDownload(!newDownloadON);
 
 
+ ***************************************************
+app.tsx
+
+// import { useStore } from "zustand";
+
+// import useCountStore from "./zustand/store";
+
+// import GlobalStates from "./zustand/useAppState";
 
 
+
+const [tableData, setTableData] = useState([]);
+  // const {tableData, settableData} = globalStates()
+
+  // const {  refreshDownloadItem, refreshDownload,initDownloads } =
+  //     useAppState();
+
+
+  // InitSocketSession(socket);
+  // Follow_Progress_Item(socket);
+
+
+
+  // initDownloads({})
+
+
+
+
+
+  // socket.current.on("message", (refreshData) => {
+    //   console.log("refreshData");
+    // });
+
+    // setTimeout(() => {
+    //   downloadActions.Follow_Progress_Item(socket);
+    // }, 5000);
+
+    // Your code here
+
+
+    // useEffect(()=>{
+      //   if(Object.keys(downloads).length){
+      //     console.log(downloads);
+      //   }
+      // },[downloads])
+      // useEffect(() => {
+      // socket = io("http://localhost:5001");
+    
+      // socket.current.connect();
+    
+      // Follow_Progress_Item(socket);
+    
+      // Listen for the `connect` event
+      // socket.current.on("connect", () => {
+      //   console.log("Connected to server.");
+      // });
+    
+      //   socket.current.on("initData", (initData) => {
+      //     console.log("setting up downloads from server");
+      //     initDownloads(initData)
+      //   });
+    
+      //   socket.current.on("progress", (refreshData) => {
+      //     console.log("refreshing data from downloads from server");
+      //     refreshDownload(refreshData)
+      //   });
+    
+      //   // Listen for the `progres` event
+      //   socket.current.on("progres", (data) => {
+      //     let nwData = refreshData(data);
+      //     console.log(nwData);
+      //     // let download_sts = Object.entries(data);
+      //     // let download_status = Object.keys(data);
+      //     // console.log(download_sts);
+      //     settableData(nwData);
+      //   });
+    
+      //   // Listen for the `message` event
+      //   socket.current.on("message", (msg) => {
+      //     console.log({ msg });
+      //     // let download_status = Object.entries(data);
+      //     // console.log({ received: download_status });
+      //     // setMessages(() => data);
+      //   });
+    
+      //   // Send a message
+      //   socket.current.emit("message", "Hello from the FRONTEND!");
+    
+      //   return () => {
+      //     socket.current.disconnect();
+      //     console.log("disconnected");
+      //   };
+    
+      // }, [socketUrl]);
+    
+      // if (socket.current.connected) {
+      //   socket.current.emit("progres", "send me updates ");
+      // }
+
+
+***************************************************
+Download_worker.tsx
+
+// import { useStore } from "zustand";
+
+//   function getFileExtension(url) {
+//     var match = url.match(/\.[^.]+$/);
+//     return match ? match[0].substring(1) : '';
+//  }
+
+// var DownloadItem = {};
+
+// const [progresID, setprogresID] = useState({ id: "0", name: "" });
+// for managing state of  the views
+
+
+// const downloads=useStore(useAppState, (state) => state.downloads);
+
+// for manaing state of functionalities
+// const { addDownload, initDownloads, downloads, setfname } = useAppState();
+
+// for setting intial values
+//for displaying the modals
+// const [progressON, displayProgress] = useState(false);
+// const [addUrlON, displayAddUrl] = useState(false);
+// const [newDowloadON, displayNewDownload] = useState(false);
+
+
+
+
+// const fileInfos = {
+  //   Url: "https://example.com/file-url",
+  //   SavePath: "./path/to/save",
+  //   FileName: "example-file.txt",
+  //   Speed: 1024,
+  //   Cmd_Option: "new",
+  // };
+
+  // const response = await axios.post('http://localhost:5000/download_file', filedata);
+
+    // console.log({uri});
+    // CreateReq(newData)
+    // AddX(55)
+    // console.log({x});
+    // console.log({"this has been .added to table ":NewItem});
+
+    // displayProgress(false);
+
+
+    // displayProgress(false);
+    // displayProgress(!progressON);
+    // console.log("download_later:: ",data);
+    // idmR.AppendToDownloads(data);
+
+    // return
+    
+    // let newFileD = {};
+    // newFileD[data["FileName"]] = data;
+
+    // let newData = {
+    //   id: "11",
+    //   Url: "url",
+    //   Status: true,
+    //   Downloaded: 0,
+    //   Speed: 120000,
+    //   Cmd_Option: "new",
+    //   Catg: "UNKNOWN",
+    //   Time_Left: 0,
+    //   File_Size: 0,
+    //   FileName: "winrar",
+    //   SavePath: "./",
+    //   Resume: false,
+    //   Finished: false,
+    // };
+
+    // console.log("later download",data);
+
+    // addDownload(newFileD);
+
+    // let name=newDownloadData['FileName']
+    // var dd = {
+    //   id: "0",
+    //   Url: "",
+    //   Status: false,
+    //   Downloaded: 0,
+    //   Speed: 256,
+    //   Cmd_Option: "new",
+    //   Catg: "UNKNOWN",
+    //   Time_Left: 0,
+    //   File_Size: 0,
+    //   FileName: "winrar-x64-623(3).exe",
+    //   SavePath: "./",
+    //   Resume: false,
+    // };
+
+    // downloadFile(data);
+    // socket.current.off("filed", ()=>{});
+    // if (id) {
+    //   // newDownloadData.id = id;
+    // } else {
+    //   console.log("error in adding to store");
+    // }
+
+
+    // useEffect(() => {
+      //   console.log({ stc: stc });
+      //   stc.on("filed", (fileDetails) => {
+      //     console.log({ ...fileDetails });
+      //     // setprogresID({ id: fileDetails.id, name: fileDetails.FileName });
+      //     setprogresID(fileDetails);
+      //     stc.off("filed", () => {});
+      //   });
+      // }, [progressON]);
+
+      // showProgressBox={() => displayProgress(!progressON)}
+
+
+      // url={""}
+      // openNewDownload={getFileDetails}
+
+      import { v4 as uuidv4 } from "uuid";
+
+      // const [newUrl, setNewUrl] = useState(url);
+
+
+      // console.log("Confirmed!");
+
+      // Add your confirmation action here
+
+***************************************************
+  New_Download.tsx
+
+
+  // var data = {
+  //   Url: "",
+  //   SavePath: "",
+  //   FileName: "",
+  //   Catg: "",
+  //   size: "",
+  //   speed_limit: "",
+  //   command_option: "",
+  //   ext: "",
+  // };
+
+
+  // let defaultDownload = {
+  //   id: "0",
+  //   Url: "",
+  //   Status: "pending",
+  //   Downloaded: 0,
+  //   Speed: 256,
+  //   Cmd_Option: "new",
+  //   Catg: "UNKNOWN",
+  //   Time_Left: 0,
+  //   File_Size: 0,
+  //   FileName: "",
+  //   SavePath: "./",
+  //   Resume: false,
+  // };
+
+
+
+  // const getFileName=(url:string)=>{
+    //   let {file_name,ext}=url.split("/").pop().trim();
+    //   // get fileName from downloads state
+    //   downloads
+    // }
+
+    // const [url, setUrl] = useState(data.Url);
+    // const [selectdPath, setSelectdPath] = useState(data.SavePath);
+    // const [filename, setFilename] = useState(data.FileName);
+    // const [category, setCategory] = useState(data.Catg);
+    // const [fileSize, setFileSize] = useState(data.File_Size);
+  
+    // const afterOpenModal = () => {
+    //   // data = props.data;
+    //   // setLocalData(e=>({...e,...props.data}))
+    //   // setLocalData(e=>({...LocalData,...props.data}))
+    //   // setUrl(props.data.Url);
+    //   // setSelectdPath(data.SavePath);
+    //   // setFilename(data.FileName);
+    //   // setFileSize(data.File_Size);
+    //   // console.log({"props.data":props.data});
+    //   // console.log({"localdata":LocalData});
+  
+    //   if (theUrl.FileName) {
+    //     console.log(data.FileName);
+    //     let ext = data.FileName.split(".")[1];
+    //     // console.log({ext:ext});
+    //     // console.log({ ext: cat_selector(ext) });
+    //     // setCategory(cat_selector(ext));
+    //     setLocalData({ ...data, Catg: cat_selector(ext) });
+    //   }
+    // };
+
+    // console.log(theUrl);
+    // setLocalData({ ...data, Url: theUrl });
+    // getFileDtailsFront(theUrl);
+
+    // console.log(NewItem);
+    // getFileDetails(LocalData);
+    // afterOpenModal();
+
+
+    // useEffect(() => {
+      //   if (LocalData.Url) {
+      //     // getFileDetails(LocalData);
+      //     getFileDtailsFront(LocalData.Url)
+      //   }
+      // }, [LocalData.Url]);
+
+
+    // const handleDirectoryChange = (event) => {
+      //   const selectedFile = event.target.files[0];
+      //   if (selectedFile.type === "directory") {
+      //     setSelectdPath(selectedFile.path);
+      //   }
+      // };
+
+      // setCategory(v);
+      // data["Catg"]=v;
+      // data['Catg']="dddddddd"
+
+      // console.log(v);
+
+      // props.showProgresBox();
+      // data={
+      //   url
+      //   selectdPath
+      //   filename
+      //   category
+      //   fileSize
+      // }
+  
+      // console.log({"props":props.data});
+      // console.log({LocalData});
+  
+      // getFileDetails(LocalData);
+
+
+
+
+  // async function getFileDtailsFront(url) {
+  //   // setshowAdd_Url(!showAdd_Url);
+  //   // setnewDownloadON(!newDownloadON);
+  //   // displayNewDownload(!newDownloadON);
+
+  //   try {
+  //     let newData = {
+  //       id: "",
+  //       Url: url,
+  //       Status: true,
+  //       Downloaded: 0,
+  //       Speed: 256,
+  //       Cmd_Option: "new",
+  //       Catg: "UNKNOWN",
+  //       Time_Left: 0,
+  //       File_Size: 0,
+  //       FileName: "",
+  //       SavePath: "./",
+  //       Resume: false,
+  //     };
+  //     const response1 = await axios.head(url);
+  //     const contentDisposition = response1.headers["content-disposition"];
+  //     newData["File_Size"] = parseInt(response1.headers["content-length"], 10);
+  //     if (contentDisposition) {
+  //       newData["FileName"] = contentDisposition.split("filename=")[0];
+  //       // here define also download.html
+  //     } else {
+  //       newData["FileName"] = url.split("/").pop().trim();
+  //     }
+  //     let [file_name, ext] = newData["FileName"].split(".") || "download.html"
+
+  //     newData["id"] = uuidv4();
+  //     newData["Catg"] = cat_selector(ext);
+
+  //     const response2 = await axios.get("http://localhost:5001/get_file_name", {
+  //       params: {
+  //         name: file_name,
+  //         ext: ext,
+  //       },
+  //     });
+
+  //     newData["FileName"] = response2.data;
+
+  //     setLocalData({ ...newData, Catg: newData["Catg"] });
+  //   } catch (error) {
+  //     console.error("Error:fin", error.message);
+  //   }
+
+  // }
+
+
+
+
+  async function getFileDetails(file_details) {
+    // setshowAdd_Url(!showAdd_Url);
+    // displayNewDownload(!newDownloadON);
+    try {
+      // const response = axios.head(url);
+      const response = axios.post(
+        "http://localhost:5001/prepare_download_file",
+        file_details
+      );
+      response
+        .then((rs) => {
+          console.log({ response: rs.data });
+          setLocalData({ ...rs.data });
+        })
+        .catch((error) => {
+          console.log({ errr: error });
+        });
+    } catch (error) {
+      console.error("Error:fin", error.message);
+    }
+  }
+
+
+
+     
+
+***************************************************
+  Download_Action.tsx
+
+  import io from "socket.io-client";
+
+  // import "react-toastify/dist/ReactToastify.css";
+  // console.log("toasted");
+  // initDownloads(data)
+
+  // axios.post("http://localhost:5001/delete_download", par).then((rs) => {
+  //     if (rs["status"] == 200) {
+  //       console.log("file deleted from list", rs.data["rs"]);
+  //     } else {
+            // info={icon:"error",text:"error in deleting the file"}
+  //       console.log("file not found on download list", rs.data["rs"]);
+  //     }
+  //   });
+
+
+  // type State = {
+  //   count: number;
+  // };
+  
+  // type Actions = {
+  //   increaseCount: () => void;
+  //   resetCount: () => void;
+  // };
+
+  // removeDownload: (id: string) => void;
+  // updateDownloadStatus: (id: string, Status: Download["Status"]) => void;
+  // updateDownloadProgress: (id: string, progress: number) => void;
+  // updateDownloadSpeed: (id: string, speed: number) => void;
+  // updateDownloadSize: (id: string, size: number) => void;
+  // useDownloadItem: (id: string,url: string) => Download | any;
+
+  // displayAddUrl: (value) => set((state) => ({ addUrlON: value })),
+  // newDownloadON: false,
+  // displayNewDownload: (value) => set((state) => ({ newDownloadON: value })),
+
+  // NewItem: string;
+  // newDownloadON: boolean;
+  // displayAddUrl: (status: boolean) => void;
+  // displayNewDownload: (status: boolean) => void;
+
+  const useDownloadItem = (id = "", name = ""): {} => {
+    if (name) {
+      return downloads[name];
+    } else if (id) {
+      return downloads[id];
+    }
+    return {};
+  };
+  
+
+
+
+
+
+***************************************************
+  useAppState.tsx
+
+
+  import { v4 as uuidv4 } from "uuid";
+  import { useState } from "react";
+
+  //  set((state) => {
+  //     const NT = {
+  //       NewItem: {...nwDown}
+  //     };
+  //     return NT
+  //   });
+
+  // console.log({ initData:initData });
+  // set((state) => ({ downloads: { ...state.downloads, ...initData } }));
+
+  // const downloadsArray = (state) => {
+  //   const newState = Object.values(state.downloads);
+  //   setState(newState);
+  // };
+
+  // console.log(state);
+  // const newDownloadState = {
+  //   downloads: { ...state.downloads, ...initData },
+  // };
+  // const downloadsArray = Object.values(newDownloadState.downloads);
+
+  // setState(downloadsArray);
+
+  // downloads: [],
+  // initDownloads: (initData) => {
+  //   set((state) => ({ downloads: [...initData] }));
+  // },
+  // console.log({comingData:comingData});
+
+  // set((state) => ({ downloads: { ...state.downloads, ...comingData } }));
+
+  // if(del){
+  //   let item=Object.keys(comingData)[0]
+  //   delete state.downloads[item]
+  // }else{
+  // }
+
+  // const newDownloadState = {
+    //   downloads: { ...comingData },
+    // };
+    // console.log(newDownloadState);
+    // const downloadsArray = Object.values(newDownloadState.downloads);
+    // setState(downloadsArray);
+
+    // console.log("object");
+
+    // return newDownloadState;
+    // return state.downloads;
+
+    // getDownloads:()=>{
+    //   get(()=>  )
+    // },
+
+    // const id = uuidv4(); // Implement a function to generate a unique ID
+    // nwDown.id=id;
+    // const newDownload: { [FileName: string]: Download } = {
+    //   ...nwDown
+    // };    
+    // console.log(state.downloads);
+
+
+    // return id;
+
+    // removeDownload: (id) => {
+      //   set((state) => ({
+      //     downloads: state.downloads.filter((download) => download.id !== id),
+      //   }));
+      // },
+      // updateDownloadStatus: (id, Status) => {
+      //   set((state) => ({
+      //     downloads: state.downloads.map((download) =>
+      //       download.id === id ? { ...download, Status } : download
+      //     ),
+      //   }));
+      // },
+      // updateDownloadProgress: (id, progress) => {
+      //   set((state) => ({
+      //     downloads: state.downloads.map((download) =>
+      //       download.id === id ? { ...download, progress } : download
+      //     ),
+      //   }));
+      // },
+      // updateDownloadSpeed: (id, speed) => {
+      //   set((state) => ({
+      //     downloads: state.downloads.map((download) =>
+      //       download.id === id ? { ...download, speed } : download
+      //     ),
+      //   }));
+      // },
+      // updateDownloadSize: (id, size) => {
+      //   set((state) => ({
+      //     downloads: state.downloads.map((download) =>
+      //       download.id === id ? { ...download, size } : download
+      //     ),
+      //   }));
+      // },
+      // useDownloadItem: (id="",url) => {
+      //   return (state) => state.downloads.find((item) => item.url === url || item.id ===id);
+      // },
+    
+      // useDownloadItem: (url) => set((state) => state.downloads.find((item) => item.url === url)),
+
+
+
+
+
+
+
+// const downloads=useStore(useAppState, (state) => state.downloads);
+
+
+
+
+// downloads: Download[];
+
+
+refreshDownloadItem: (comingData) => {
+  // set((state) => ({ downloads: [...state.downloads, ...comingData] }));
+  // console.log(comingData);
+  return;
+  // set((state) => ({
+  //   downloads: state.downloads.map((download) =>
+  //     download.id === comingData.id ? { ...comingData } : download
+  //   ),
+  // }));
+},
+setfname: (fn) => {
+  set((state) => ({
+    fname: fn,
+  }));
+},
+
+
+// console.log({ downloadsInside: downloads });
+// If both id and url are provided, prioritize id
+
+
+
+
+
+
+
+// // Selector function to get a single download item
+// export const useDownloadItem = (id = "", name = "") => {
+//   const { downloads } = useAppState();
+//   if (name) {
+//     return downloads[name];
+//     // return downloads.find((download) => download.id === id);
+//   } else if (id) {
+//     return downloads[id];
+//     // return downloads.find((download) => download.Url === url);
+//   }
+
+//   // If neither id nor url is provided, return null
+//   // return null;
+// };
+
+
+
+
+
+
+
+let newData = {
+  id: "",
+  Url: "url",
+  Status: true,
+  Downloaded: 0,
+  Speed: 256,
+  Cmd_Option: "new",
+  Catg: "UNKNOWN",
+  Time_Left: 0,
+  File_Size: 0,
+  FileName: "",
+  SavePath: "./",
+  Resume: false,
+  Finished: false,
+};
+
+***************************************************
+NavHead.tsx
+import New_Download from "./New_Download";
+import Add_Url from "./Add_Url";
+import Download_Progress from "./Download_Progress";
+import io from "socket.io-client";
+import { CATEGORY_TYPES } from "../Constant/Constant";
+import Form from "react-bootstrap/Form";
+
+
+// const [newDownloadON, displayNewDownload] = useState(false);
+// const [showProgress, setshowProgress] = useState(false);
+// const [showAdd_Url, setshowAdd_Url] = useState(false);
+
+// var socket=null;
+  // const response =  fetch(
+  //   url,
+  //   {
+  //     method: "GET",
+  //     mode: "no-cors",
+  //     credentials: 'same-origin',
+  //   },
+  // );
+  // const instance = axios.create({
+  //   headers: {
+  //     method: "GET",
+  //     mode: "no-cors",
+  //     "Access-Control-Allow-Origin": "*",
+  //     // "Content-Type": "application/json",
+  //     credentials: 'same-origin',
+  //     withCredentials: true,
+  //   },
+  // });
+  // const res = instance.get(url);
+
+  // const inst = axios.create({
+  //   withCredentials: true,
+  //   headers: {
+  //     mode: "no-cors",
+  //     'Access-Control-Allow-Origin' : '*',
+  //     'Access-Control-Allow-Methods':'GET,PUT,POST,DELETE,PATCH,OPTIONS',
+  //     }
+  // });
+
+
+  // setshowAdd_Url(!showAdd_Url);
+  // setnewDownloadON(!newDownloadON);
+
+  // console.log(rs);
+  // console.log(rs.headers["content-length"]);
+
+
+  // cat_selector("")
+
+
+  // function connectSocket() {
+    //   socket = io("http://localhost:5001");
+  
+    //   // Listen for the `connect` event
+    //   socket.on("connect", () => {
+    //     console.log("Connected to server.");
+    //   });
+  
+    //   // Listen for the `message` event
+    //   socket.on("message", (data) => {
+    //     console.log(`Received message: ${data}`);
+    //   });
+  
+    //   // Send a message
+    //   socket.emit("message", "Hello from the client!");
+  
+    //   // Close the connection
+    //   // setTimeout(() => {
+    //   //   socket.disconnect();
+    //   // }, 5000000);
+    // }
+
+    // setshowAdd_Url(!showAdd_Url);
+    // if(socket){
+    //   socket.disconnect();
+    // }
+    // connectSocket();
+    // startNewDownload
+    // getFileDetails(nwDownload.new_url);
+    // setshowAdd_Url(!showAdd_Url)
+    // setshowProgress(!showProgress);
+    // setnewDownloadON(!newDownloadON);
+
+    // let xd = { filename: fname };
+    // console.log("stop 3 clicked to stop", { xd });
+
+
+    // axios
+    //   .post("http://localhost:5001/stop", xd)
+    //   .then((response) =>
+    //     console.log({ download_file_server_response: response })
+    //   );
+
+
+    {/* {showAdd_Url && (
+      <Add_Url
+        url={xurl}
+        show={showAdd_Url}
+        handleClose={Close_Add_url}
+        openNewDownload={getFileDetails}
+      />
+    )}
+    {newDownloadON && (
+      <New_Download
+        data={nwDownload}
+        show={newDownloadON}
+        showProgresBox={()=>setshowProgress(!showProgress)}
+        handleClose={Close_New_Down}
+      />
+    )}
+
+    {showProgress && (
+      <Download_Progress
+        downloadDetails={defaultDownload}
+        show={showProgress}
+        handleClose={handleClose}
+      />
+    )} */}
+
+
+    
+    // let xurl =
+    //   "https://www.win-rar.com/fileadmin/winrar-versions/winrar/winrar-x64-623.exe";
+
+
+
+    // // "selectedMultiple"
+    // if(true){
+    //   // delete selected files
+    //   par['all']=false
+    // }else{
+    //   // delete  all files
+    // }
+
+    // par['many']=true
+    // idmR.DelItem(SelectedRow)
+
+
+
+
+    const handleFilterClick = () => {
+      // Perform filtering logic here based on searchTerm, filter1, and filter2
+      // Update the table data accordingly
+    };
+
+
+***************************************************
+Download_Progress.tsx
+
+// import { useStore } from "zustand";
+import io from "socket.io-client";
+import axios from "axios";
+
+// import {
+//   InitSocketSession,
+//   Follow_Progress_Item,
+//   Follow_Progress_bundle,
+//   Dowload_Actions,
+// } from "../Utils/DownLoad_Action";
+
+
+// const [show, setShow] = useState(false);
+// const handleClose = () => setShow(false);
+// const handleShow = () => setShow(true);
+
+
+
+// var DownloadContent = {
+//   FileName: "",
+//   Status: "Get",
+//   File_Size: "25315364",
+//   Speed: "145",
+//   Downloaded: "5156235",
+//   Time_Left: "62536125",
+//   Resume: "true",
+// };
+
+
+// useEffect(() => {
+  //   let {
+  //     FileName,
+  //     Status,
+  //     Speed,
+  //     Finished,
+  //     File_Size,
+  //     Downloaded,
+  //     Time_Left,
+  //     Resume,
+  //     url,
+  //   } = item;
+
+  //   DownloadContent = {
+  //     FileName,
+  //     Status,
+  //     Speed,
+  //     File_Size,
+  //     Downloaded,
+  //     Time_Left,
+  //     Resume,
+  //   };
+  //   // const perCent = ((Downloaded / File_Size) * 100).toFixed(2);
+  //   const perCent = Math.round((Downloaded / File_Size) * 100);
+  //   setNew_Url(url);
+  //   setProgresX(perCent);
+
+  //   setDownloadContent(DownloadContent);
+  //   // return () => {
+  //   // }
+  // }, [progresID,item]);
+
+  // const socket = useRef(null);
+  // const socketUrl = "http://localhost:5001";
+  // socket.current = io(socketUrl, {
+  //   autoConnect: false,
+  // });
+  // const downloadActions = Dowload_Actions();
+  // downloadActions.StartSessions(socket);
+
+  // const downloadActions = Dowload_Actions();
+  // var downloadProgress = {};
+  // var { id, FileName,...rest } = progresID;
+  // console.log(progresID);
+
+  // useEffect(() => {
+  //   // let { id, name, ...rest } = progresID;
+  //   console.log({ progresID: progresID });
+  //   console.log("refreshing display");
+  //   if(FileName){
+  //     console.log("refreshing display inside");
+  //     downloadProgress = downloadActions.useDownloadItem(id, FileName);
+  //   }
+  //   // console.log({ downloadItem: downloadProgress });
+  //   // console.log({ downloads: downloads });
+  //   // console.log({ progresID: progresID });
+  //   // InitSocketSession(socket);
+  //   // Follow_Progress_Item(socket);
+  //   // Follow_Progress_bundle();
+  // }, [downloads]);
+
+  // useEffect(() => {
+  //   // console.log({ progresID: progresID });
+  //   console.log(progresID["Status"]);
+  //   if (progresID["Status"]) {
+  //     console.log("setting downloadProgress display");
+  //     // console.log({ progresID: progresID });
+  //     // console.log({ downloadProgress: downloadProgress });
+  //     // var downloadProgress = progresID || DownloadData;
+  //     setTimeout(() => {
+  //       let dp = dwAct.useDownloadItem(progresID.id, progresID.FileName);
+  //       setDownloadContent(dp);
+  //       console.log(dp);
+  //     }, 5000);
+  //     console.log(downloadProgress);
+  //     // var { id, FileName,...rest } = downloadProgress;
+  //   }
+  // }, []);
+
+  // useEffect(() => {
+
+  //   if (progresID["Status"]) {
+  //     downloadProgress =dwAct.useDownloadItem(progresID.id, progresID.FileName);
+  //     // let dp = dwAct.useDownloadItem(progresID.id, progresID.FileName);
+  //     // if(dp){
+  //     //   dwAct.useDownloadItem(progresID.id, progresID.FileName);
+  //     //   // setDownloadContent(dp);
+  //     // }
+  //     console.log({downloadProgress});
+
+  //   }
+  // }, [progresID]);
+
+  // console.log({progresID});
+  // console.log({downloadProgress});
+  
+  // setTimeout(() => {
+  //   const dp =dwAct.useDownloadItem(progresID.id, progresID.FileName);
+  //   setDownloadContent(dp);
+
+  // }, 10000);
+
+  // console.log(progresID);
+  // setTimeout(() => {
+  // }, 10000);
+  // const { addDownload, initDownloads, downloads } = useStore(useAppState);
+
+  // console.log(downloadProgress)
+  // var dp = dwAct.useDownloadItem(progresID.id, progresID.FileName);
+  // setDownloadContent(dp);
+  // console.log(downloadProgress)
+
+  // downloads[progresID.FileName]
+  // progresID.FileName
+  // myDictionary.hasOwnProperty('myKey')
+  // console.log(downloads[progresID.FileName]);
+  // console.log(downloadProgress);
+  
+  // return (
+  //   <>
+  //     {progresID.FileName && downloadProgress["Status"]
+  //       ? downloadProgress["Downloaded"]
+  //       : "Loading"}
+  //   </>
+  // );
+
+  // if (!downloadProgress["Status"]) {
+  // }
+
+
+  {/* <Button variant="primary" onClick={sendMessage}>
+  send MSG
+  </Button> */}
+  {/* {fileContent} */}
+
+
+
+
+  const [fileContent, setfileContent] = useState("");
+  const [theFile, settheFile] = useState(null);
+
+
+  ***************************************************
+
+DataTable.tsx
+
+// import paginationFactory from "react-bootstrap-table2-paginator";
+
+import { io } from "socket.io-client";
+import Download_Progress from "./Download_Progress";
+import filterFactory, { textFilter } from "react-bootstrap-table2-filter";
+
+// Catg
+// Cmd_Option
+// Downloaded
+// FileName
+// File_Size
+// Resume
+// SavePath
+// Speed
+// Status
+// Time_Left
+// Url
+
+
+// {
+//   N: 2,
+//   fileName: "winrar-x64-623.exe",
+//   Status: true,
+//   Finished: false,
+//   Time_Left: 1241,
+//   Downloaded: 2612,
+//   Speed: 145,
+//   Extension: ".exe",
+// },
+// ... other data
+
+// let filteredData=[];
+// let downloadsArray = Object.values(downloads) ;
+
+// const  useDownloadTa = useDownloadTable()
+// const [tableData, settableData] = useState(dataTable);
+
+// const [tableData, setTableData] = useState<Download[]>([]);
+
+// const { downloads } = useAppState();
+// const downloadsArray = Object.values(downloads);
+// const [tableData, settableData] = useState(downloadsArray);
+
+// console.log({ downloads: downloads });
+// console.log({ downloadsarray: downloadsArray });
+
+// console.log({ tableData });
+
+// const filteredData = dataTable.filter(
+//   (item) =>
+//     item.FileName.includes(filterName) && item.Catg.includes(filterCat)
+// );
+
+// const filteredData = dataTable.filter(
+//   (item) => {
+//     const regex = new RegExp(`^${filterName}.*`, 'i');
+//     // const regCat = new RegExp(`^${filterCat}.*`, 'i');
+//     // && item.Catg.match(regCat);
+//     return item.FileName.match(regex)
+//   }
+//  );
+
+// const defaultDownload = {
+//   new_url: "url",
+//   savePath: "./",
+//   name_file: "newfile",
+//   catg: "compress",
+//   size: "0",
+//   speed_limit: "0",
+//   command_option: "new",
+//   downloaded: 0,
+//   Resume: "false",
+// };
+
+
+// const filteredData = tableData.filter(
+  //   (item) =>
+  //     item.FileName.includes(filterName) && item.Catg.includes(filterCat)
+  // );
+
+  // const paginationOption = {
+  //   custom: true,
+  //   totalSize: data.length,
+  //   sizePerPage: 5,
+  //   hideSizePerPage: true,
+  //   hidePageListOnlyOnePage: true
+  // };
+
+  //   .sortable tr {
+  //     cursor: pointer;
+  // }
+
+  // useEffect(() => {
+  //   if (useDownloadTa) {
+  //     settableData(useDownloadTa);
+  //   }
+  //   // return () => {
+  //   // }
+  // }, [useDownloadTa]);
+
+  // useEffect(() => {
+  //   if (downloads) {
+  //     settableData(downloadsArray);
+  //   }
+  // }, [downloads]);
+
+
+
+
+
+  // console.log({ e });
+  // console.log({ row });
+  // console.log({ dta });
+  // Add your function code here
+
+
+
+  {/* {showProgress && (
+    <Download_Progress
+      downloadDetails={nwDownload}
+      show={showProgress}
+      handleClose={() => setshowProgress(false)}
+    />
+  )} */}
+
+  
+
+  <BootstrapTable
+  rowStyle={rowCssStyle}
+  keyField="id"
+  data={filteredData}
+  columns={columns}
+  rowEvents={rowEvents}
+  hover
+  // rowStyle={ (_,ind) => ind === selectedRowID ? {backgroundColor: 'lightblue'} : {} }
+  // rowStyle={(_,ind) => {backgroundColor: ind === selectedRowID ? '#dcdcdc' : null}}
+  // rowStyle={{backgroundColor: rowIndex === selectedRowID ? '#dcdcdc' : null}}
+  // pagination={paginationFactory()}
+/>
+
+
+***************************************************
+Confirm.tsx
+// import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+// import { faIconName } from '@fortawesome/free-solid-svg-icons';
+
+
+***************************************************
+copyClipboard.tsx
+// setShowTooltip(true);
+    // setTimeout(() => setShowTooltip(false), 150);
+
+
+***************************************************
+NavHead.tsx
+  const { fname } = useAppState();
+  const [searchTerm, setSearchTerm] = useState("");
+
+  const handleClose = () => displayProgress(false);
+  const Close_New_Down = () => displayNewDownload(false);
+  const Close_Add_url = () => displayAddUrl(false);
+
+***************************************************
+Constant.tsx
+  // export const CATEGORY_TYPES = {
+  //     COMPRESSED: 'compressed',
+  //     DOCUMENT: 'document',
+  //     VIDEO: 'video',
+  //     AUDIO: 'audio',
+  //     UNKNOWN: 'unknown',
+  //   } as const;
+  
+
+************************************************************************************************
+
+
+import json
+from threading import Thread
+
+# from socket import SocketIO
+from flask_socketio import SocketIO, emit
+import aiohttp
+import asyncio
+import aiofiles
+
+
+from tool import get_file_size
+from flask import Flask, request, jsonify
+from flask_cors import CORS
+import os
+import re
+import requests
+# from observer_socket import start_observer
+import bson
+# import observer_socket
+from observer_socket import run_observer
+import time
+
+# from quart import Quart
+# app = Quart(__name__)
+
+
+# loop = asyncio.get_event_loop()
+app = Flask(__name__)
+socketio = SocketIO(app,cors_allowed_origins="*")
+# socketio = SocketIO(app)
+
+# CORS(app,resources={r"/*":{"origins":"*"}})
+
+# CORS(app)
+
+downloads = {}
+
+
+# def get_file_details(url):
+#     parsed_url = urlparse(url)
+#     path = parsed_url.path
+#     filename = Path(path).name
+#     filename_without_extension = Path(filename).stem
+#     file_extension = Path(filename).suffix
+#     return filename, filename_without_extension, file_extension
+
+# def get_file_size(url):
+#    response = requests.head(url)
+#    file_size = int(response.headers.get('Content-Length', 0))
+#    return file_size
+
+
+@app.route('/get_file_name', methods=['GET'])
+def get_file_name():
+    file_infos = request.args.to_dict()
+    file_name = file_infos.get('name') or 'dowload_file'
+    ext = file_infos.get('ext') or "html"
+    save_dir = file_infos.get('SavePath') or "./"
+    pattern = re.compile(f'^{re.escape(file_name)}(\(\d+\))?.{re.escape(ext)}$')
+    content_dir=os.listdir(save_dir)
+    matching_files = [f for f in content_dir if pattern.match(f)]
+    # print(len(matching_files))
+    file_count = f'({len(matching_files)})' if len(matching_files) else ""
+    print(file_count)
+    file_name=f'{file_name}{file_count}.{ext}'
+
+    # print(file_infos)
+    # print(file_count)
+    # print(file_name)
+    # file_infos = request.get_json()
+    # file_infos = request.args
+    # [file_name,ext]=file_infos.split('.')
+    # print(content_dir)
+    # file_count=content_dir.count(pattern)
+    # print(file_name,ext)
+    # print(f'file_count {file_count}')    
+
+    return file_name
+
+@app.route('/prepare_download_file', methods=['POST'])
+async def download_header():
+
+    print("grabbing file details")
+    file_infos = request.get_json()
+    print(file_infos)
+
+    file_url = file_infos.get('Url') or None
+    save_dir = file_infos.get('SavePath') or "./"
+    Catg=file_infos.get('Catg') or "UNKNOWN"
+    speed_limit = file_infos.get('Speed') or None
+    file_name = file_infos.get('FileName') or os.path.basename(file_url) 
+    command = file_infos.get('Cmd_Option') or "new" # values continue,restart,new
+    save_state_file = os.path.join(save_dir, 'download_state.bson')
+    random_id = file_infos.get('id') or None
+
+    localDownload = {}
+    downloaded_size=0
+    if not random_id:
+        import uuid
+        random_id = uuid.uuid1()
+
+
+    # Get the filename from the response headers
+    # response = requests.get(file_url)
+
+    response = requests.head(file_url)
+    file_size = int(response.headers.get('Content-Length', 0)) or 0
+    # file_size = len(response.content) or 0
+    
+    # file_size =  0
+
+    print("OVER HERE  !!!!!!")
+
+    if not file_name :
+        content_disposition = response.headers.get('Content-Disposition')
+        file_name = get_filename_from_content_disposition(content_disposition)
+
+    # Load the state from the save_state_file, if it exists
+    if os.path.exists(save_state_file):
+        with open(save_state_file, mode='rb') as state_file:
+            print('reading the file')
+            bson_data =state_file.read()
+        # Decode BSON data
+        localDownload = bson.loads(bson_data)
+    file_save_path = os.path.join(save_dir, file_name)
+
+
+    if localDownload.get(file_name):
+        if command=="restart":
+            os.remove(file_save_path)
+        elif command=="continue":
+            downloaded_size=os.path.getsize(file_save_path)
+            # if downloaded_size:
+            #     localDownload[file_name]['Downloaded']=downloaded_size  
+            # print("continue download of file_name from Downloaded ****")
+        elif command=="new":
+            # verify if not a continue|resume request ...
+            [file_name,ext]=file_name.split('.')
+            pattern = re.compile(f'^{re.escape(file_name)}(\(\d+\))?.{re.escape(ext)}$')
+            content_dir=os.listdir(save_dir)
+            # print(content_dir)
+            # file_count=content_dir.count(pattern)
+            matching_files = [f for f in content_dir if pattern.match(f)]
+            file_count = len(matching_files)
+            # print(file_name,ext)
+            # print(f'file_count {file_count}')
+            file_name=f'{file_name}({file_count+1}).{ext}'
+            file_save_path = os.path.join(save_dir, file_name)
+
+    # building file entry in database
+    localDownload[file_name] = {
+    "id": random_id,
+    "Url": file_url,
+    "Status": True,
+    "Downloaded": downloaded_size,
+    "Cmd_Option": command,
+    "Speed": speed_limit,
+    "Catg":Catg,
+    "FileName":file_name,
+    "Time_Left": 0,
+    "File_Size": file_size,
+    "SavePath": save_dir,
+    "Resume": False,
+    }
+
+    return jsonify(localDownload[file_name])
+    # socketio.emit('filed', localDownload[file_name])
+
+
+@app.route('/download_file', methods=['POST'])
+async def download_file():
+    print("starting download_file")
+    file_infos = request.get_json()
+    id = file_infos.get('id') or None
+    file_url = file_infos.get('Url') or None
+    file_name = file_infos.get('FileName') or None
+    Catg=file_infos.get('Catg') or "UNKNOWN"
+    speed_limit = file_infos.get('Speed') or None
+    downloaded_size = file_infos.get('Downloaded') or 0
+    save_dir = file_infos.get('SavePath') or "./"
+    command = file_infos.get('Cmd_Option') or "new" # values continue,restart,new
+    save_state_file = os.path.join(save_dir, 'download_state.bson')
+    file_save_path = os.path.join(save_dir, file_name)
+    file_size = file_infos.get('File_Size')
+
+    global downloads
+
+    if os.path.exists(save_state_file):
+        with open(save_state_file, mode='rb') as state_file:
+            print('reading the file')
+            bson_data =state_file.read()
+
+        downloads = bson.loads(bson_data)
+
+    file_save_path = os.path.join(save_dir, file_name)   
+
+
+    if os.path.exists(file_save_path) :
+        downloaded_size=os.path.getsize(file_save_path)
+        if command=="restart":
+            os.remove(file_save_path)
+
+    downloads[file_name] = {
+    "id": id,
+    "Url": file_url,
+    "Status": True,
+    "Downloaded": downloaded_size,
+    "Cmd_Option": command,
+    "Speed": speed_limit,
+    "Catg":Catg,
+    "FileName":file_name,
+    "Time_Left": 0,
+    "File_Size": file_size,
+    "SavePath": save_dir,
+    "Resume": False,
+    }
+
+    byte_range = downloads[file_name]['Downloaded']
+    headers={'Range': f'bytes={byte_range}-'}
+    # Get the current event loop
+    
+
+    async with aiohttp.ClientSession() as session:
+        async with session.get(file_url,headers=headers) as response:
+
+            file_size = int(response.headers.get('Content-Length', 0))
+            if not downloads[file_name]['File_Size']==file_size:
+                downloads[file_name]['File_Size']=file_size
+
+            chunk_size=500 * 1024 
+            num_chunks = file_size // chunk_size
+
+            tasks = []
+            while downloaded_size < file_size :
+
+                if not downloads[file_name]['Status']:
+                    with open(save_state_file, mode='wb') as state_file:
+                        print('Starting the file write')
+                        bson_data = bson.dumps(downloads)
+                        state_file.write(bson_data)
+                        break
+
+                data = await response.content.read(256)
+
+                byte_range += len(data)
+                downloads[file_name]['Downloaded']=byte_range
+
+                socketio.emit('progres', downloads)
+                print(f'downloading --{byte_range}')
+                print(downloads)
+                task = await asyncio.create_task(write_chunk_to_file(file_save_path,data,file_name,save_state_file,downloaded_size))
+                tasks.append(task)
+                await asyncio.sleep(1)
+
+            await asyncio.gather(*tasks)
+
+    return f"File {file_name}  Download finish"
+
+
+
+async def write_chunk_to_file(file_path, data, file_name,save_state_file,file_size_on_disk):
+    print(f'appending {get_file_size(len(data))}')
+    with open(file_path, 'ab') as file:
+        file.write(data)
+
+    #  # Save the current state to the save_state_file
+    # with open(save_state_file, 'w') as state_file:
+    #     json.dump(downloads, state_file)
+
+   # Save the current state to the save_state_file
+
+    if downloads[file_name]:
+        print("keeping track of file")
+        # with open(save_state_file, 'w') as state_file:
+        #     json.dump(downloads, state_file)
+        #     state_file.write('\n')
+        #if file is added to downloads then update the state in the save_state_file
+        async with aiofiles.open(save_state_file, 'wb') as state_file:
+            bson_data = bson.dumps(downloads)
+            await state_file.write(bson_data)
+            # downloads[file_name]
+    else:
+        # here i do the creation of entry in the save_state_file to keep progress status
+        # for persever progress data of downloads 
+        pass 
+
+    file_size_on_disk=os.path.getsize(file_path)
+    
+    # print(downloads,"before task started")
+
+    response_data = downloads[file_name]
+        # Return the response as JSON
+    return jsonify(response_data)
+   
+    # return file_size_on_diskx
+
+# def coroutine(file_path,file_name,save_state_file,file_size_on_disk):
+#     with open(save_state_file, 'a') as state_file:
+#         json.dump({file_name: downloads[file_name]}, state_file)
+#         state_file.write('\n')
+#     file_size_on_disk=os.path.getsize(file_path)
+    
+
+def get_filename_from_content_disposition(content_disposition):
+    if content_disposition:
+        parts = content_disposition.split(';')
+        for part in parts:
+            if part.strip().startswith('filename='):
+                filename = part.split('=')[1].strip().strip('"')
+                return filename
+    return 'downloaded_file.html'
+
+
+@app.route('/stop_download', methods=['POST'])
+def stop_download():
+    data = request.get_json()
+    file_name = data.get('filename')
+    returnStatus={file_name:file_name,"Status":False}
+
+    if file_name in downloads:
+        if downloads[file_name].get('Status'):
+            downloads[file_name]['Status'] = False
+            return f"Download of {file_name} stopped successfully"
+
+    return f"the {file_name} is not running"
+
+@app.route('/resume_download', methods=['POST'])
+def resume_download():
+    data = request.get_json()
+    file_name = data.get('filename')
+
+    if file_name in downloads:
+        downloads[file_name]['Status'] = True
+    else:
+        downloads[file_name] = {'Status': True}
+
+        # Start a new download task
+        asyncio.create_task(download_file())
+
+    return f"Download of {file_name} resumed"
+
+
+@app.route('/resume', methods=['GET'])
+def handle_my_custom_event():
+ loop = asyncio.get_event_loop()
+ loop.create_task(async_task())
+#  socketio.start_background_task(async_task)
+ print('asyncio called1')
+ return "asyncio called1"
+
+
+async def async_task():
+ print("asyncio completed")
+ await asyncio.sleep(1)
+ return "asyncio completed"
+
+# defining the flask app
+def run_flask_app(socketio):
+    print("FLASK & SOCKETS RUNNING OK ----->")
+    # loop = asyncio.new_event_loop()
+    # asyncio.set_event_loop(loop)
+    # loop = asyncio.get_event_loop()
+
+    # print("loop----------")
+    # print(loop)
+
+    # socketio.run(app, debug=True,port=5001)
+    app.run(debug=True, port=5001)
+
+
+if __name__ == '__main__':
+    
+    # run_observer(socketio)
+    # Start the Flask-SocketIO server in a separate thread
+    socketio_thread = Thread(target=run_observer(socketio))
+    socketio_thread.start()
+
+    run_flask_app(socketio)
+
+
+    # run_flask_app(socketio)
+
+    loop = asyncio.new_event_loop()
+    asyncio.set_event_loop(loop)
+    
+
+    # Run the Flask app and the observer in separate tasks
+    # run_observer(socketio)
+    # loop.run_until_complete(run_observer(socketio))
+    run_observer(socketio)
+
+     # Run the event loop to keep the app running
+    loop.run_forever()
+
+    # loop.run_until_complete(download_file())
+    # start_observer(app)
+
+    # observer_socket.run(app)
+    
+    # app.run(debug=True)
+    # asyncio.run(download_file(),debug=True)
+    # socketio.run(app)
+
+
+
+
+*******************************************************************************************************************
+OBSERVER_SOCKET.PY
+
+    # async def on_modified(self, event):
+        
+    #     if not event.is_directory:
+    #         if event.src_path=="./download_state.bson":
+    #             file_path = event.src_path
+    #             try:
+    #                 # print(file_path)
+    #                 # self.socketio.emit('progres', {"dat":'yes progres am here:sent from backend'})
+    #                 # socketio.emit('message', "edited file")
+    #                 async with aiofiles.open(file_path, mode='rb') as state_file:
+    #                     print('reading the file')
+    #                     bson_data =await state_file.read()
+    #                     downloads_state = bson.loads(bson_data)
+    #                     self.socketio.emit('progres', downloads_state)
+
+                    # with open(file_path, 'rb') as file:
+                    #     bson_data = file.read()
+                    #     downloads_state = bson.loads(bson_data)
+                    #     self.socketio.emit('progres', downloads_state)
+                        
+    #             # Decode BSON data
+    #             except Exception as e:
+    #                 print(f"Error reading file or emitting data: {e}")
+
+            # with open(file_path, 'rb') as file:
+            #      socketio.emit('message', file.read())
+                #  socketio.emit('file_upload', file.read())
+                # patch = jsonpatch.make_patch(self.old_state, new_state)
+
+
+            # Send the file to the client using WebSocket
+            # Your code to send the file goes here
+
+# app_path = os.path.dirname(os.path.abspath(__file__))
+
+# def Init(app):
+#     if os.path.exists(save_state_file):
+#         # Read BSON data from a file
+#         with open(save_state_file, 'wb') as state_file:
+#             # Convert JSON to BSON
+#             bson_data = bson.dumps(downloads)
+#             state_file.write(bson_data)
+#         with open("./download_state.bson", 'rb') as file:
+#             bson_data = file.read()
+#             # Decode BSON data
+#             downloads_state = bson.loads(bson_data)
+
+# @socketio.on('connect')
+# def on_connect():
+#     start_observer(socketio)
+
+# @socketio.on('disconnect')
+# def on_disconnect():
+#     observer.stop()
+#     observer.join()
+
+# if __name__ == '__main__':
+#     # socketio.run(app)
+
+# print("OBSERVER RUNNING OK ----->")
+# observer = Observer()
+# event_handler = FileChangeHandler(socketio,loop)
+# observer.schedule(event_handler, path='./', recursive=True)
+# observer.start()
+
+********************************************************************
+App.py
+
+# save_state_file = os.path.join("./", 'download_state.bson')
+# if not os.path.exists(save_state_file):
+#     print("error no file is on download")  
+#     return jsonify({"error":"error no file is on download"})
+# else:
+#     with open(save_state_file, mode='rb') as state_file:
+#         bson_data =state_file.read()
+#     downloads = bson.loads(bson_data)
+#     data = request.get_json()
+#     file_name = data.get('FileName')
+#     Item=downloads.get(file_name)
+#     if Item:
+#         # if Item.get('Status'):
+#         Item['Status'] = True
+#         # Start a new download task
+#         asyncio.create_task(download_file())
+#         return f"Download of {file_name} resumed successfully"
+#     else:
+#         downloads[file_name] = {'Status': False}
+
+
+# with open(save_state_file, mode='rb') as state_file:
+#     bson_data =state_file.read()
+# downloads = bson.loads(bson_data)
+
+# print(array)
+# print(downloads.get("winrar-x64-623(1).exe"))
+# array = [ [k, v] for k, v in downloads.items()]
+# print(array[0]==["winrar-x64-623(1).exe"])
+# data = request.get_json()
+# file_name = data.get('FileName')
+# returnStatus={file_name:file_name,"Status":False}
+# Item=downloads.get(file_name)
+# print(Item)
+# if Item:
+#     if Item.get('Status'):
+#         print(Item.get('Status'))
+#         Item['Status'] = False
+#         return f"Download of {file_name} stopped successfully"
+
+
+# file_size_on_disk=os.path.getsize(file_path)
+    
+# print(downloads,"before task started")
+
+# response_data = downloads[file_name]/////***
+
+# Return the response as JSON
+# return jsonify(response_data)
+
+# return file_size_on_diskx
+
+# def coroutine(file_path,file_name,save_state_file,file_size_on_disk):
+#     with open(save_state_file, 'a') as state_file:
+#         json.dump({file_name: downloads[file_name]}, state_file)
+#         state_file.write('\n')
+#     file_size_on_disk=os.path.getsize(file_path)
+
+
+# downloaded_size=os.path.getsize(file_path)
+        # downloaded_size=downloads[file_name]['Downloaded']
+
+# async with session.get(file_url,headers=headers) as response:
+# file_size = int(response.headers.get('Content-Length', 0))
+# if not downloads[file_name]['File_Size']==file_size:
+#     downloads[file_name]['File_Size']=file_size
+# chunk_size=500 * 1024 
+# num_chunks = file_size // chunk_size
+# connexions=Conx_number
+# file_size = 1000000 # size of the file in bytes
+
+
+# print(downloads[file_name])
+
+# write_status_file(downloads)
+
+# return f"File {file_name}  Download finish"
+
+
+# File_Bytes=bytearray()
+
+# byte_range = downloads[file_name]['Downloaded']
+# headers={'Range': f'bytes={byte_range}-'}
+# Get the current event loop    
+# session = aiohttp.ClientSession(limits=aiohttp.Limits(
+#max_connections=5 # limit to 5 concurrent connections
+# )
+# )
+
+
+# print(file_infos)
+# print(file_count)
+# print(file_name)
+# file_infos = request.get_json()
+# file_infos = request.args
+# [file_name,ext]=file_infos.split('.')
+# print(content_dir)
+# file_count=content_dir.count(pattern)
+# print(file_name,ext)
+# print(f'file_count {file_count}')
+
+# def get_file_details(url):
+#     parsed_url = urlparse(url)
+#     path = parsed_url.path
+#     filename = Path(path).name
+#     filename_without_extension = Path(filename).stem
+#     file_extension = Path(filename).suffix
+#     return filename, filename_without_extension, file_extension
+
+# def get_file_size(url):
+#    response = requests.head(url)
+#    file_size = int(response.headers.get('Content-Length', 0))
+#    return file_size
+
+
+
+
+
+# run_observer(socketio)
+    # Start the Flask-SocketIO server in a separate thread
+    # run_flask_app(socketio)
+    # Run the Flask app and the observer in separate tasks
+    # run_observer(socketio)
+    # loop.run_until_complete(run_observer(socketio))
+    # loop.run_until_complete(download_file())
+    # start_observer(app)
+    # observer_socket.run(app)
+    # app.run(debug=True)
+    # asyncio.run(download_file(),debug=True)
+    # socketio.run(app)
+
+    # loop = asyncio.new_event_loop()
+    # asyncio.set_event_loop(loop)
+    # loop = asyncio.get_event_loop()
+    # print("loop----------")
+    # print(loop)
+    # socketio.run(app, debug=True,port=5001)
+
+
+
+    # {file_names}
+    # if many:
+    # else:
+    #     file_names = [data.get('FileName')] or None
+    # del downloads[file_name]
+    # file_save_path = os.path.join( save_dir, file_name)
+    # if os.path.exists(file_save_path) :
+    #     os.remove(file_save_path)
+# with open(save_state_file, mode='wb') as state_file:
+#     bson_data = bson.dumps(downloads)
+#     state_file.write(bson_data)
+
+
+# items=data.get('rows') or None
+# file_names=[item['filename'] for item in items if 'filename' in item]
+# delete_files(file_names)
+# Item=downloads.get(file_name) or None
+# if Items:
+# for file_name in File_List:
+    # del downloads[file_name]
+    # file_save_path = os.path.join( save_dir, file_name)
+    # if os.path.exists(file_save_path) :
+    #     os.remove(file_save_path)
+
+
+
+    # with open(save_state_file, mode='rb') as state_file:
+    #     bson_data =state_file.read()
+    # downloads = bson.loads(bson_data)
+    # read_status_file()
+
+
+
+    # many = data.get('many') or None
+    # status_download_file='download_state.bson'
+    # save_dir = "./"
+    # save_state_file = os.path.join(save_dir,status_download_file)
+
+
+  # with open(save_state_file, 'w') as state_file:
+  #     json.dump(downloads, state_file)
+  #     state_file.write('\n')
+  #if file is added to downloads then update the state in the save_state_file
+
+
+  #  # Save the current state to the save_state_file
+  # with open(save_state_file, 'w') as state_file:
+  #     json.dump(downloads, state_file)
+  # Save the current state to the save_state_file
+
+
+   # print(downloads)
+   # print(len(File_Bytes))
+   # await write_chunk_to_file(file_save_path,File_Bytes,downloads,file_name,save_state_file)
+
+   # task = await asyncio.create_task(my_task())
+   # task = await asyncio.create_task(download_task(session, file_url, start, end,file_name,downloads,file_save_path,save_state_file))
+
+   # while downloaded_size < file_size :
+   # for cnx in range(0,connexions):
+
+   # file_size = len(response.content) or 0
+   # file_size =  0
+
+   # Get the filename from the response headers
+   # response = requests.get(file_url)
+
+   import json
 
 
 

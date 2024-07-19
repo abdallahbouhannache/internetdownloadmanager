@@ -1,7 +1,6 @@
 import React from "react";
 import { Button, Card, Image } from "react-bootstrap";
-// import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-// import { faIconName } from '@fortawesome/free-solid-svg-icons';
+
 import Warn from "../assets/Danger.svg";
 
 const Confirm = ({

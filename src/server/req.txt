@@ -1,0 +1,6 @@
+Flask-SocketIO
+aiohttp
+aiofiles
+Flask-Cors
+bson
+watchdog

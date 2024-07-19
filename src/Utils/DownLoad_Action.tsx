@@ -2,25 +2,17 @@ import useAppState, { useIdmRequests } from "../zustand/useAppState";
 import axios from "axios";
 import { v4 as uuidv4 } from "uuid";
 import { CATEGORY_TYPES } from "../Constant/Constant";
-import io from "socket.io-client";
-import swal from 'sweetalert';
-import { Bounce, Slide, toast } from 'react-toastify';
-// import "react-toastify/dist/ReactToastify.css";
-
+import swal from "sweetalert";
+import { Bounce, Slide, toast } from "react-toastify";
 
 export function Dowload_Actions() {
-  const { downloads, refreshDownloadItem, refreshDownload, initDownloads } =
-    useAppState();
+  const { downloads, refreshDownload, initDownloads } = useAppState();
 
   const StartSessions = (socket) => {
     socket.current.connect();
-    
-
 
     // Handle connection events
     socket.current.on("connect", () => {
-      // console.log("toasted");
-      
       toast("Welcome", {
         position: "bottom-right",
         autoClose: 500,
@@ -30,10 +22,9 @@ export function Dowload_Actions() {
         draggable: true,
         progress: undefined,
         theme: "light",
-        transition:Bounce
-        });
+        transition: Bounce,
+      });
       console.log("Connected to socket  server");
-      // initDownloads(data)
     });
 
     socket.current.on("load", (data) => {
@@ -75,15 +66,13 @@ export function Dowload_Actions() {
 }
 
 export function InitSocketSession(socket) {
-  const { downloads, refreshDownloadItem, refreshDownload } = useAppState();
+  const { downloads, refreshDownload } = useAppState();
   console.log("trying to initiate socket connect");
   socket.current.connect();
 
   // Handle connection events
   socket.current.on("connect", () => {
-    
     console.log("Connected to socket  server");
-
   });
 
   socket.current.on("disconnect", () => {
@@ -125,7 +114,6 @@ export const IdmReq = () => {
   };
 
   async function getFileDtailsFront(url) {
-    
     try {
       let newData = {
         id: "11",
@@ -142,7 +130,7 @@ export const IdmReq = () => {
         Resume: true,
         Finished: false,
       };
-      // add handling if no result or error in head 
+      // add handling if no result or error in head
       const response1 = await axios.head(url);
       const contentDisposition = response1.headers["content-disposition"];
       newData["File_Size"] = parseInt(response1.headers["content-length"], 10);
@@ -169,21 +157,19 @@ export const IdmReq = () => {
 
       return newData;
     } catch (error) {
-      console.log("Error: getFileDtailsFront >" );
+      console.log("Error: getFileDtailsFront >");
       if (error.response) {
         console.log(error.response.data);
         console.log(error.response.status);
-       } else if (error.request) {
+      } else if (error.request) {
         console.log(error.request);
-       } else {
-         console.log(error.message);
-       } 
+      } else {
+        console.log(error.message);
+      }
     }
   }
 
   const InitItem = async (url) => {
-    
-    
     const filedata = await getFileDtailsFront(url);
   };
 
@@ -214,46 +200,38 @@ export const IdmReq = () => {
   };
 
   const DelItems = async (par) => {
-    console.log("from the down_actions > DelItems ");
-    console.log(par);
-    
+    // console.log("from the down_actions > DelItems ");
+    // console.log(par);
+
     swal({
       title: "Are you sure?",
       text: "Once deleted, you will not be able to recover this file!",
       icon: "warning",
-      buttons: ["No","Yes"],
+      buttons: ["No", "Yes"],
       dangerMode: true,
-    })
-    .then((willDelete) => {
+    }).then((willDelete) => {
       if (willDelete) {
-        
-        let info="file deleted from downloads "
-        // axios.post("http://localhost:5001/delete_download", par).then((rs) => {
-        //     if (rs["status"] == 200) {
-        //       console.log("file deleted from list", rs.data["rs"]);
-        //     } else {
-                  // info={icon:"error",text:"error in deleting the file"}
-        //       console.log("file not found on download list", rs.data["rs"]);
-        //     }
-        //   });
-
-        
-        toast(info, {
-          position: "bottom-right",
-          autoClose: 300,
-          hideProgressBar: false,
-          closeOnClick: true,
-          pauseOnHover: true,
-          draggable: true,
-          progress: undefined,
-          theme: "colored",
-          transition:Bounce
+        axios
+          .post("http://localhost:5001/delete_download", par)
+          .then((response) => {
+            
+            let info = "Selected Files Were Deleted";
+            toast(info, {
+              position: "bottom-right",
+              autoClose: 300,
+              hideProgressBar: false,
+              closeOnClick: true,
+              pauseOnHover: true,
+              draggable: true,
+              progress: undefined,
+              theme: "colored",
+              transition: Bounce,
+            });
           });
-
-        // swal("Poof! Your imaginary file has been deleted!", info);
       }
     });
-    return
+
+    return;
     axios.post("http://localhost:5001/delete_download", par).then((rs) => {
       if (rs["status"] == 200) {
         console.log("file deleted from list", rs.data["rs"]);
