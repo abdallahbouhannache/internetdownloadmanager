@@ -11,7 +11,11 @@ import Add from "../assets/add-file.png";
 import Stop from "../assets/stop (1).png";
 import Recyle from "../assets/waste.png";
 import axios from "axios";
-import { useIdmRequests, useWindowsStore } from "../zustand/useAppState";
+import {
+  useIdmRequests,
+  useProgresID,
+  useWindowsStore,
+} from "../zustand/useAppState";
 import { IdmReq } from "../Utils/DownLoad_Action";
 import { useStore } from "zustand";
 
@@ -25,7 +29,6 @@ const style = {
 };
 
 function NavHead() {
-
   const defaultDownload = {
     new_url: "",
     savePath: "./",
@@ -49,37 +52,39 @@ function NavHead() {
 
   const { CurrentRow, SetCurrentRow } = useIdmRequests((state) => state);
   const idmR = IdmReq();
-  const [nwDownload, setNewDownload] = useState(defaultDownload);
-  
-  async function getFileDetails(url) {
-    displayNewDownload(!newDownloadON);
-    try {
-      const response = axios.head(url);
-      response
-        .then((rs) => {
-          let newData = {
-            new_url: url,
-            savePath: "./",
-            name_file: "",
-            catg: "UNKNOWN",
-            size: 0,
-            speed_limit: 256,
-            command_option: "new",
-            downloaded: 0,
-            Resume: "false",
-          };
-          newData["name_file"] = url.split("/").pop();
-          newData["size"] = rs.headers["content-length"];
+  const { progresID, setprogresID } = useProgresID();
 
-          setNewDownload(newData);
-        })
-        .catch((error) => {
-          console.log({ errr: error });
-        });
-    } catch (error) {
-      console.error("Error:fin", error.message);
-    }
-  }
+  // const [nwDownload, setNewDownload] = useState(defaultDownload);
+
+  // async function getFileDetails(url) {
+  //   displayNewDownload(!newDownloadON);
+  //   try {
+  //     const response = axios.head(url);
+  //     response
+  //       .then((rs) => {
+  //         let newData = {
+  //           new_url: url,
+  //           savePath: "./",
+  //           name_file: "",
+  //           catg: "UNKNOWN",
+  //           size: 0,
+  //           speed_limit: 256,
+  //           command_option: "new",
+  //           downloaded: 0,
+  //           Resume: "false",
+  //         };
+  //         newData["name_file"] = url.split("/").pop();
+  //         newData["size"] = rs.headers["content-length"];
+
+  //         // setNewDownload(newData);
+  //       })
+  //       .catch((error) => {
+  //         console.log({ errr: error });
+  //       });
+  //   } catch (error) {
+  //     console.error("Error:fin", error.message);
+  //   }
+  // }
 
   const handleAddClick = () => {
     displayAddUrl(!addUrlON);
@@ -87,46 +92,50 @@ function NavHead() {
   };
 
   const handleContinueClick = () => {
-    const par={}
-    par['rows']=[CurrentRow]
-    if(CurrentRow){
-      par['rows'].length>1 && displayNewDownload(!newDownloadON);
+    const par = {};
+    par["rows"] = [CurrentRow];
+    if (CurrentRow) {
+      console.log(CurrentRow);
+      par["rows"].length == 1 && displayProgress(!progressON);
+      let data = {
+        id: par["rows"][0].id ||  "",
+        FileName:par["rows"][0].FileName ||  "",
+      };
+      setprogresID(data);
+      console.log(data);
+      console.log(progresID);
+
       idmR.ContinueItems(par)
     }
     console.log("continue clicked");
   };
 
   const handleStopClick = () => {
-    
     console.log(CurrentRow);
-    const par={}
-    par['rows']=[CurrentRow]
-    if(CurrentRow){
-      idmR.StopItems(par)
+    const par = {};
+    par["rows"] = [CurrentRow];
+    if (CurrentRow) {
+      idmR.StopItems(par);
     }
     console.log("stop clicked");
-    
   };
 
   const handleRemoveItems = () => {
-    const par={}
-    par['rows']=[CurrentRow]
-    if(CurrentRow){
-      idmR.DelItems(par)
+    const par = {};
+    par["rows"] = [CurrentRow];
+    if (CurrentRow) {
+      idmR.DelItems(par);
     }
     console.log("selected item has been removed");
-
   };
 
   const handleDelAll = () => {
-    const par={}
-    par['all']=true
-    idmR.DelItems(par)
+    const par = {};
+    par["all"] = true;
+    idmR.DelItems(par);
     console.log("all items has been removed");
-    
   };
 
-  
   return (
     <>
       <Navbar className="bg-body-tertiary" bg="light" data-bs-theme="light">

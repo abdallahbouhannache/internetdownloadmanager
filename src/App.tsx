@@ -25,26 +25,26 @@ function App() {
   const donwloads = useAppState((state) => state.downloads);
   const dataTable = Object.values(donwloads);
 
-  const refreshData = (json_data: ArrayLike<unknown>) => {
-    const data = Object.entries(json_data).map(
-      ([fileName, fileInfo], index) => {
-        const fileInfoAny = fileInfo as any; // Type assertion to 'any'
-        return {
-          N: index + 1,
-          fileName,
-          Status: fileInfoAny.running ? "downloading" : "stop",
-          Finished: false,
-          Time_Left: fileInfoAny.Time_Left,
-          Downloaded: fileInfoAny.Downloaded,
-          Speed: fileInfoAny.Speed,
-          Extension: fileName.substring(fileName.lastIndexOf(".")),
-          FileSize: fileInfoAny.Size,
-          Url: fileInfoAny.Url,
-        };
-      }
-    );
-    return data;
-  };
+  // const refreshData = (json_data: ArrayLike<unknown>) => {
+  //   const data = Object.entries(json_data).map(
+  //     ([fileName, fileInfo], index) => {
+  //       const fileInfoAny = fileInfo as any; // Type assertion to 'any'
+  //       return {
+  //         N: index + 1,
+  //         fileName,
+  //         Status: fileInfoAny.running ? "downloading" : "stop",
+  //         Finished: false,
+  //         Time_Left: fileInfoAny.Time_Left,
+  //         Downloaded: fileInfoAny.Downloaded,
+  //         Speed: fileInfoAny.Speed,
+  //         Extension: fileName.substring(fileName.lastIndexOf(".")),
+  //         FileSize: fileInfoAny.Size,
+  //         Url: fileInfoAny.Url,
+  //       };
+  //     }
+  //   );
+  //   return data;
+  // };
 
   const socket = useRef(null);
   const socketUrl = "http://localhost:5001";
@@ -63,7 +63,6 @@ function App() {
 
   console.log("re-rendring the app");
 
-  
 
   const sendMessage = (message) => {
     toast("Hello Geeks");

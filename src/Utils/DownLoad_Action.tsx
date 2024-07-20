@@ -5,6 +5,9 @@ import { CATEGORY_TYPES } from "../Constant/Constant";
 import swal from "sweetalert";
 import { Bounce, Slide, toast } from "react-toastify";
 
+
+
+
 export function Dowload_Actions() {
   const { downloads, refreshDownload, initDownloads } = useAppState();
 
@@ -29,6 +32,7 @@ export function Dowload_Actions() {
 
     socket.current.on("load", (data) => {
       initDownloads(data);
+      
     });
 
     socket.current.on("progres", (refreshData) => {
@@ -102,7 +106,8 @@ export const StopListeners = (socket) => {
 export const IdmReq = () => {
   // the store manager
   const { NewItem, CreateReq, CurrentRow, SetCurrentRow } = useIdmRequests();
-  const { addDownload } = useAppState();
+
+  const { downloads,addDownload, refreshDownload } = useAppState();
 
   // @ts-ignore
   const cat_selector = (ext: string) => {
@@ -116,7 +121,7 @@ export const IdmReq = () => {
   async function getFileDtailsFront(url) {
     try {
       let newData = {
-        id: "11",
+        id: "",
         Url: url,
         Status: true,
         Downloaded: 0,
@@ -124,8 +129,8 @@ export const IdmReq = () => {
         Cmd_Option: "new",
         Catg: "UNKNOWN",
         Time_Left: 0,
-        File_Size: 100000,
-        FileName: "winrar",
+        File_Size: 0,
+        FileName: "",
         SavePath: "./",
         Resume: true,
         Finished: false,
@@ -139,7 +144,7 @@ export const IdmReq = () => {
       } else {
         newData["FileName"] = url.split("/").pop().trim();
       }
-      let [file_name, ext] = newData["FileName"].split(".") || "download.html";
+      let [file_name, ext] = newData["FileName"].split(".") || ["download","html"];
 
       newData["id"] = uuidv4();
       newData["Catg"] = cat_selector(ext);
@@ -181,21 +186,38 @@ export const IdmReq = () => {
     axios.post("http://localhost:5001/download_file", data).then((response) => {
       console.log({ "download_file_server_response ended": response });
     });
+    
   };
 
   const ContinueItems = async (par) => {
-    console.log(par);
+    console.log({par});
+    console.log(par.rows[0]['FileName']);
+
+    // let name=par.rows[0]['FileName']
+    // downloads[name]['Status']=true
+
+    // let thedownload = {...downloads};
+    // console.log("downloads",downloads[name]);
+    
     axios
-      .post("http://localhost:5001/resume_download", par)
-      .then((response) => {
+    .post("http://localhost:5001/resume_download", par)
+    .then((response) => {
+      // refreshDownload();
+        // refreshDownload(downloads);
         console.log({ "download_file_server_response ended": response });
       });
   };
 
   const StopItems = async (par) => {
-    console.log(par);
-    axios.post("http://localhost:5001/stop_download", par).then((response) => {
-      console.log({ "download_file_server_response ended": response });
+    
+    // let name=par.rows[0]['FileName']
+    // downloads[name]['Status']=false
+    // refreshDownload(downloads);
+    
+    axios.post("http://localhost:5001/stop_download", par).then((res) => {
+      // if(res.status==200){
+      // }
+      console.log({ "download_file_server_response ended": res });
     });
   };
 

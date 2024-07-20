@@ -1,39 +1,81 @@
 import BootstrapTable from "react-bootstrap-table-next";
 import { InputGroup, Form, Button } from "react-bootstrap";
 import { IdmReq } from "../Utils/DownLoad_Action";
-import { useIdmRequests } from "../zustand/useAppState";
+import {
+  useIdmRequests,
+  useProgresID,
+  useWindowsStore,
+} from "../zustand/useAppState";
 import { useState } from "react";
+import { formatFileSize } from "../Utils/tools";
 
 const DataTable = ({ dataTable }) => {
   const [filterName, setFilterName] = useState("");
   const [filterCat, setFilterCat] = useState("");
   const { CurrentRow, SetCurrentRow } = useIdmRequests((state) => state);
+  const { progresID, setprogresID } = useProgresID();
+  const { displayProgress, progressON } = useWindowsStore();
 
-  const data = [
-    {
-      FileName: "ManuallyEntred.exe",
-      SavePath: "/downloads/images",
-      Status: true,
-      Finished: false,
-      Time_Left: 15241,
-      Downloaded: 253612,
-      File_Size: 10000,
-      Speed: 14525,
-      Url: "https",
-      Catg: ".exe",
-      Resume: false,
-    },
-  ];
+  const handleRowDoubleClick = (e, row, rowIndex) => {
+    e.stopPropagation();
+    console.log(`Double-clicked row ${rowIndex}:`, row, e);
+
+    let data = {
+      id: row.id || "",
+      FileName: row.FileName || "",
+    };
+    setprogresID(data);
+    displayProgress(!progressON);
+
+    // Add your logic here, e.g., navigate to detail view, open modal, etc.
+  };
+
+  // const data = [
+  //   {
+  //     FileName: "ManuallyEntred.exe",
+  //     SavePath: "/downloads/images",
+  //     Status: true,
+  //     Finished: false,
+  //     Time_Left: 15241,
+  //     Downloaded: 253612,
+  //     File_Size: 10000,
+  //     Speed: 14525,
+  //     Url: "https",
+  //     Catg: ".exe",
+  //     Resume: false,
+  //   },
+  // ];
 
   const columns = [
     { dataField: "FileName", text: "FileName", sort: true },
     { dataField: "Status", text: "Status", sort: true },
     { dataField: "Finished", text: "Finished", sort: true },
     { dataField: "Time_Left", text: "Time_Left", sort: true },
-    { dataField: "Speed", text: "Speed", sort: true },
-    { dataField: "Downloaded", text: "Downloaded", sort: true },
+    {
+      dataField: "Speed",
+      text: "Speed",
+      sort: true,
+      formatter: (cellContent, row, rowIndex, formatExtraData) => {
+        return formatFileSize(cellContent);
+      },
+    },
+    {
+      dataField: "Downloaded",
+      text: "Downloaded",
+      sort: true,
+      formatter: (cellContent, row, rowIndex, formatExtraData) => {
+        return formatFileSize(cellContent);
+      },
+    },
     { dataField: "SavePath", text: "SavePath", sort: true },
-    { dataField: "File_Size", text: "File_Size", sort: true },
+    {
+      dataField: "File_Size",
+      text: "File_Size",
+      sort: true,
+      formatter: (cellContent, row, rowIndex, formatExtraData) => {
+        return formatFileSize(cellContent);
+      },
+    },
     { dataField: "Url", text: "Url", sort: true },
     { dataField: "Catg", text: "Catg", sort: true },
     { dataField: "Resume", text: "Resume", sort: true },
@@ -45,7 +87,7 @@ const DataTable = ({ dataTable }) => {
       item.Catg.toLowerCase().includes(filterCat.toLowerCase())
   );
 
-  const [showProgress, setshowProgress] = useState(false);
+  // const [showProgress, setshowProgress] = useState(false);
 
   var DownloadContent = {
     Status: "Get",
@@ -55,13 +97,14 @@ const DataTable = ({ dataTable }) => {
     Time_Left: "1min 25sec",
     Resume: "True",
   };
-
-  const [nwDownload, setNewDownload] = useState(DownloadContent);
+  // const [nwDownload, setNewDownload] = useState(DownloadContent);
 
   const [selectedRowID, setSelectedRowID] = useState(null);
   const idmR = IdmReq();
 
   const rowEvents = {
+    onDoubleClick: handleRowDoubleClick,
+
     onClick: (e, row, rowIndex) => {
       e.stopPropagation();
       let item = {
@@ -75,15 +118,12 @@ const DataTable = ({ dataTable }) => {
         Time_Left: row.Time_Left,
         Resume: row.Resume,
       };
-
-      setNewDownload(item);
-      setshowProgress(!showProgress);
+      // setNewDownload(item);
+      // setshowProgress(!showProgress);
       setSelectedRowID(rowIndex);
       SetCurrentRow(item);
-
-      console.log(e.currentTarget);
+      // console.log(e.currentTarget);
       console.log(`clicked on row with index: ${rowIndex}`);
-
       // idmR.InitItem(url);
       // idmR.ContinueItem(item);
       // e.currentTarget.style.backgroundColor = "red";

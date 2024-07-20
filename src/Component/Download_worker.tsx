@@ -3,12 +3,13 @@ import NewDownload from "./New_Download";
 import AddUrl from "./Add_Url";
 import { useEffect, useState } from "react";
 import axios from "axios";
-import useAppState, { useIdmRequests, useWindowsStore } from "../zustand/useAppState";
+import useAppState, { useIdmRequests, useProgresID, useWindowsStore } from "../zustand/useAppState";
 import { IdmReq } from "../Utils/DownLoad_Action";
 
 const DownloadWorker = ({ stc, dwAct }) => {
 
-  const [progresID, setprogresID] = useState({});
+  const { progresID, setprogresID } = useProgresID();
+
   const [link, setLink] = useState("");
   
   const {
@@ -25,9 +26,7 @@ const DownloadWorker = ({ stc, dwAct }) => {
   const idmR = IdmReq();
   
   const { CreateReq,NewItem } = useIdmRequests(state => state);
-
  
-
   const downloadFile = async (filedata) => {
     try {
      
@@ -47,7 +46,6 @@ const DownloadWorker = ({ stc, dwAct }) => {
   const openNewDownload = (uri) => {
     setLink(uri);
     displayNewDownload(!newDownloadON);
-
     idmR.InitItem(uri);
     
   };
@@ -75,8 +73,8 @@ const DownloadWorker = ({ stc, dwAct }) => {
     displayNewDownload(false);
     displayProgress(!progressON);
     idmR.StartItem(data);
-    
   };
+
 
   return (
     <>
@@ -101,7 +99,7 @@ const DownloadWorker = ({ stc, dwAct }) => {
       {progressON && (
         <DownloadProgress
           dwAct={dwAct}
-          progresID={progresID} 
+          // progresID={progresID}
           // change it to id?(could not be provided if new download),url to use them for grabbing/tracking the data from store
           show={progressON}
           handleClose={handleProgressClose}

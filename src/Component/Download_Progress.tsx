@@ -16,9 +16,11 @@ import BootstrapTable from "react-bootstrap-table-next";
 import { CSSTransition } from "react-transition-group";
 import "../Style/Download_Progress.css";
 import CopyWrapper from "./copyClipBoard";
-import useAppState from "../zustand/useAppState";
+import useAppState, { useProgresID } from "../zustand/useAppState";
+import { formatFileSize } from "../Utils/tools";
 
-function Download_Progress({ dwAct, progresID, handleClose, show }) {
+function Download_Progress({ dwAct, handleClose, show }) {
+  const { progresID } = useProgresID();
   const [activeTab, setActiveTab] = useState("Download");
   const handleTabChange = (tab) => {
     setActiveTab(tab);
@@ -28,14 +30,13 @@ function Download_Progress({ dwAct, progresID, handleClose, show }) {
     id: "",
     Url: "",
     Status: false,
-    // Status: "pending",
     Downloaded: 0,
     Speed: 256,
     Cmd_Option: "new",
     Catg: "UNKNOWN",
     Time_Left: 0,
     File_Size: 0,
-    // FileName: "",
+    FileName: "",
     SavePath: "./",
     Resume: false,
   };
@@ -60,25 +61,26 @@ function Download_Progress({ dwAct, progresID, handleClose, show }) {
     setshowContent(!showContent);
   };
 
-  
   const [messages, setMessages] = useState([]);
   const { downloads } = useAppState();
 
   useEffect(() => {
-    // const dp =dwAct.useDownloadItem(progresID.id, progresID.FileName);
-    // setDownloadContent(dp);
+    if (progresID.FileName !== "") {
+      const dp = dwAct.useDownloadItem(progresID.id, progresID.FileName);
 
+      // downloads[progresID.FileName];
+      setDownloadContent(dp);
+    }
   }, [downloads[progresID.FileName]]);
 
   return (
     <>
       <Modal size="lg" show={show} className="visible" onHide={handleClose}>
-        
         {messages}
         <Modal.Header closeButton>
           <Modal.Title>
             Downloading
-            {downloadProgress["Downloaded"]}
+            {formatFileSize(downloadProgress["Downloaded"])}
           </Modal.Title>
         </Modal.Header>
         <Modal.Body>
@@ -112,7 +114,7 @@ function Download_Progress({ dwAct, progresID, handleClose, show }) {
                         {/* <Clipboard width="fit-content" /> */}
                       </Col>
                     </Row>
-                    {Object.entries(downloadProgress).map(([key, value]) => (
+                    {Object.entries(downloadProgress).map(([key, v]) => (
                       <Form.Group
                         key={key}
                         as={Row}
@@ -127,7 +129,7 @@ function Download_Progress({ dwAct, progresID, handleClose, show }) {
                             size="sm"
                             type="text"
                             // defaultValue={value}
-                            value={String(value)}
+                            value={String(key === "Downloaded" ? formatFileSize(v) : v)}
                             placeholder={key}
                             plaintext
                             readOnly

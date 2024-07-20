@@ -37,12 +37,12 @@ def get_file_name():
     pattern = re.compile(f'^{re.escape(file_name)}(\(\d+\))?.{re.escape(ext)}$')
     content_dir=os.listdir(save_dir)
     matching_files = [f for f in content_dir if pattern.match(f)]
-    # print(len(matching_files))
     file_count = f'({len(matching_files)})' if len(matching_files) else ""
-    print(file_count)
     file_name=f'{file_name}{file_count}.{ext}'
-
     return file_name
+    # print(len(matching_files))
+    # print(file_count)
+
 
 # @app.route('/prepare_download_file', methods=['POST'])
 # async def download_header():
@@ -127,7 +127,7 @@ def get_file_name():
 #     # socketio.emit('filed', localDownload[file_name])
 
 async def download_file(file_infos):
-    print("starting download_file")
+    # print("starting download_file")
     id = file_infos.get('id') or None
     file_url = file_infos.get('Url') or None
     file_name = file_infos.get('FileName') or None
@@ -147,7 +147,7 @@ async def download_file(file_infos):
 
     if os.path.exists(save_state_file):
         with open(save_state_file, mode='rb') as state_file:
-            print('reading the file')
+            # print('reading the file')
             bson_data =state_file.read()
         status_tracker = bson.loads(bson_data)
 
@@ -220,7 +220,8 @@ async def download_task(session, url, start, end,file_name,file_save_path,save_s
     async with session.get(url, headers=headers) as response:
         part_size = int(response.headers.get('Content-Length', 0))
         
-        downloaded_size=start
+        downloaded_size=status_tracker[file_name]['Downloaded']
+        # downloaded_size += len(start)
         file_size=status_tracker[file_name]['File_Size']
         
         # print('\n')
