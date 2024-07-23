@@ -18,16 +18,19 @@ import "../Style/Download_Progress.css";
 import CopyWrapper from "./copyClipBoard";
 import useAppState, { useProgresID } from "../zustand/useAppState";
 import { formatFileSize } from "../Utils/tools";
+import { IdmReq } from "../Utils/DownLoad_Action";
 
 function Download_Progress({ dwAct, handleClose, show }) {
+  const idmR = IdmReq();
   const { progresID } = useProgresID();
   const [activeTab, setActiveTab] = useState("Download");
+
   const handleTabChange = (tab) => {
     setActiveTab(tab);
   };
 
   var DownloadData = {
-    id: "",
+    // id: "",
     Url: "",
     Status: false,
     Downloaded: 0,
@@ -37,7 +40,7 @@ function Download_Progress({ dwAct, handleClose, show }) {
     Time_Left: 0,
     File_Size: 0,
     FileName: "",
-    SavePath: "./",
+    SavePath: "./downloads/",
     Resume: false,
   };
 
@@ -64,12 +67,23 @@ function Download_Progress({ dwAct, handleClose, show }) {
   const [messages, setMessages] = useState([]);
   const { downloads } = useAppState();
 
+  const handleStopContinue = () => {
+    let rows = [downloadProgress];
+
+    if (downloadProgress["Status"]) {
+      idmR.StopItems({ rows });
+    } else {
+      idmR.ContinueItems({ rows });
+    }
+  };
+
   useEffect(() => {
     if (progresID.FileName !== "") {
       const dp = dwAct.useDownloadItem(progresID.id, progresID.FileName);
 
       // downloads[progresID.FileName];
-      setDownloadContent(dp);
+      const { id, ...restOfDownProgress } = dp; // Destructure and exclude the 'id' property
+      setDownloadContent(restOfDownProgress);
     }
   }, [downloads[progresID.FileName]]);
 
@@ -95,12 +109,15 @@ function Download_Progress({ dwAct, handleClose, show }) {
               >
                 <div className="tab-content">
                   <Container>
-                    <Row className=" justify-content-start">
-                      <Form.Group xs={"9"} as={Col} controlId="urlInput">
+                    <Row className=" justify-content-start mb-3 row" >
+                      <Form.Label column sm="4">
+                        {"URL"}:
+                      </Form.Label>
+                      <Form.Group xs={"6"}  as={Col} controlId="urlInput">
                         <Form.Control
                           size="sm"
                           type="text"
-                          value={new_url}
+                          value={downloadProgress["Url"]}
                           placeholder="URL"
                           plaintext
                           readOnly
@@ -108,34 +125,49 @@ function Download_Progress({ dwAct, handleClose, show }) {
                       </Form.Group>
                       <Col xs={"auto"}>
                         <CopyWrapper
-                          text={new_url}
+                          text={downloadProgress["Url"]}
                           child={<Clipboard width="fit-content" />}
                         />
                         {/* <Clipboard width="fit-content" /> */}
                       </Col>
                     </Row>
                     {Object.entries(downloadProgress).map(([key, v]) => (
-                      <Form.Group
-                        key={key}
-                        as={Row}
-                        className="mb-3"
-                        controlId="formPlaintextEmail"
-                      >
-                        <Form.Label column sm="4">
-                          {key}:
-                        </Form.Label>
-                        <Col sm="8">
-                          <Form.Control
-                            size="sm"
-                            type="text"
-                            // defaultValue={value}
-                            value={String(key === "Downloaded" ? formatFileSize(v) : v)}
-                            placeholder={key}
-                            plaintext
-                            readOnly
-                          />
-                        </Col>
-                      </Form.Group>
+                      <React.Fragment key={key}>
+                        {key !== "Url" && (
+                          <Form.Group
+                            key={key}
+                            as={Row}
+                            className="mb-3"
+                            controlId="formPlaintextEmail"
+                          >
+                            <Form.Label column sm="4">
+                              {key}:
+                            </Form.Label>
+                            <Col sm="8">
+                              <Form.Control
+                                size="sm"
+                                type="text"
+                                // defaultValue={value}
+                                // value={String(
+                                //   key === ("Downloaded" || "Speed" || "File_Size")
+                                //     ? formatFileSize(v)
+                                //     : v
+                                // )}
+                                value={String(
+                                  ["Downloaded", "Speed", "File_Size"].includes(
+                                    key
+                                  )
+                                    ? formatFileSize(v)
+                                    : v
+                                )}
+                                placeholder={key}
+                                plaintext
+                                readOnly
+                              />
+                            </Col>
+                          </Form.Group>
+                        )}
+                      </React.Fragment>
                     ))}
 
                     <ProgressBar
@@ -191,8 +223,8 @@ function Download_Progress({ dwAct, handleClose, show }) {
           <Button onClick={handleClose} variant="outline-warning">
             Cancel
           </Button>
-          <Button onClick={handleClose} variant="outline-dark">
-            Pause
+          <Button onClick={handleStopContinue} variant="outline-dark">
+            {downloadProgress["Status"] ? "Pause" : "Continue"}
           </Button>
           <Button onClick={handleToggle} variant="outline-secondary">
             {showContent ? "Hide" : "Show"}

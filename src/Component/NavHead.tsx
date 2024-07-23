@@ -31,7 +31,7 @@ const style = {
 function NavHead() {
   const defaultDownload = {
     new_url: "",
-    savePath: "./",
+    savePath: "./downloads/",
     name_file: "",
     catg: "UNKNOWN",
     size: 0,
@@ -102,9 +102,10 @@ function NavHead() {
         FileName:par["rows"][0].FileName ||  "",
       };
       setprogresID(data);
-      console.log(data);
-      console.log(progresID);
-
+      // console.log(data);
+      // console.log(progresID);
+      // console.log({par});
+      
       idmR.ContinueItems(par)
     }
     console.log("continue clicked");

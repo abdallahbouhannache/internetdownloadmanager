@@ -131,7 +131,7 @@ export const IdmReq = () => {
         Time_Left: 0,
         File_Size: 0,
         FileName: "",
-        SavePath: "./",
+        SavePath: "./downloads/",
         Resume: true,
         Finished: false,
       };
@@ -213,6 +213,7 @@ export const IdmReq = () => {
     // let name=par.rows[0]['FileName']
     // downloads[name]['Status']=false
     // refreshDownload(downloads);
+    console.log(par);
     
     axios.post("http://localhost:5001/stop_download", par).then((res) => {
       // if(res.status==200){

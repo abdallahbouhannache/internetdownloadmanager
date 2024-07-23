@@ -24,6 +24,7 @@ const DataTable = ({ dataTable }) => {
       id: row.id || "",
       FileName: row.FileName || "",
     };
+    
     setprogresID(data);
     displayProgress(!progressON);
 

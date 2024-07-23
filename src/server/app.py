@@ -33,7 +33,7 @@ def get_file_name():
     file_infos = request.args.to_dict()
     file_name = file_infos.get('name') or 'dowload_file'
     ext = file_infos.get('ext') or "html"
-    save_dir = file_infos.get('SavePath') or "./"
+    save_dir = file_infos.get('SavePath') or "./downloads"
     pattern = re.compile(f'^{re.escape(file_name)}(\(\d+\))?.{re.escape(ext)}$')
     content_dir=os.listdir(save_dir)
     matching_files = [f for f in content_dir if pattern.match(f)]
@@ -181,6 +181,14 @@ async def download_file(file_infos):
     if not file_size:
         return f"File {file_name}  Filesize error"
 
+    internet=await retry_internet_check("")
+    if not internet:
+        status_tracker[file_name]['Status'] = False
+        socketio.emit('progres', status_tracker)
+        return jsonify({'error': 'No internet connection'}), 503
+        # res="error in connection please try again in  a while"
+        # return Response(res, status=503, mimetype='application/json')
+
     async with aiohttp.ClientSession() as session:
         try:
             tasks = []
@@ -193,11 +201,15 @@ async def download_file(file_infos):
                 tasks.append(task)
                 # print(tasks)
                 await asyncio.sleep(1)
+
+            speed_task=get_bandwith_speed(session,file_name,file_url)
+            tasks.append(speed_task)
+
             await asyncio.gather(*tasks)
             
         except ConnectionError as e:
             print("error in fetching file")
-
+            # return
 
 @app.route('/download_file', methods=['POST'])
 async def download_file_api():
@@ -207,28 +219,88 @@ async def download_file_api():
     return f"File {file_name} Download finish"
 
 
+async def get_bandwith_speed(session, file_name,url, init_test_size=1024*1024):  # Test size 1MB
+    
+    global status_tracker
+    while status_tracker[file_name]['Status']:
+        await asyncio.sleep(0.4)
+        start_time = time.time()
+        headers = {'Range': f'bytes=0-{init_test_size-1}'}
+        receivedData=0
+        factor=1
+        async with session.get(url, headers=headers) as response:
+            while True:
+                try:
+                    # Attempt to read exactly test_size_bytes
+                    test_size_bytes = init_test_size
+                    chunk = await response.content.read(test_size_bytes)
+                    # chunk = await asyncio.wait_for(response.content.read(test_size_bytes), timeout=1)
+                    receivedData=len(chunk)
+                    break  # Success, exit the loop
+                except EOFError:
+                    factor+=1
+                    # Reduce test_size_bytes if readexactly fails
+                    test_size_bytes -= 1024*factor  # Example reduction, adjust as needed
+                    if test_size_bytes <= 1024:
+                        status_tracker[file_name]['Speed']=test_size_bytes
+                        # return test_size_bytes
+                        # raise Exception("Failed to read any data")
+
+        end_time = time.time()
+        elapsed_time = end_time - start_time
+        speed_in_bytes_per_second = receivedData / elapsed_time
+        # print({"datasize":receivedData ,"time",elapsed_time})
+        # Round the speed to 2 decimal places
+        rounded_speed = round(speed_in_bytes_per_second)
+        status_tracker[file_name]['Speed']=rounded_speed
+        # return rounded_speed
+
+
+def check_internet_connection(url):
+    try:
+        requests.get('https://www.google.com', timeout=5)
+        return True
+    except requests.ConnectionError:
+        return False
+
+
+async def retry_internet_check(url, max_retries=5, delay=1):
+    for attempt in range(max_retries):
+        if check_internet_connection(url):
+            return True
+        else:
+            print(f"Attempt {attempt + 1}: No internet connection. Retrying in {delay} seconds...")
+            await asyncio.sleep(delay)
+    else:
+        print("Max retries reached. Cancelling download.")
+        return False
+
+
+
+
+
 async def download_task(session, url, start, end,file_name,file_save_path,save_state_file):
-    print("download_task being -------------")
+    # print("download_task being -------------")
     File_Bytes=bytearray()
     global status_tracker
+    
+    # speed_limit=status_tracker[file_name]['Speed']
 
-            
-
-    speed_limit=status_tracker[file_name]['Speed']
     headers = {'Range': f'bytes={start}-{end}'}
+    # timeout=60
+
+    # print({"sped":sped})
+    # print({"sped":speed_limit})
 
     async with session.get(url, headers=headers) as response:
-        part_size = int(response.headers.get('Content-Length', 0))
-        
+        # part_size = int(response.headers.get('Content-Length', 0))
         downloaded_size=status_tracker[file_name]['Downloaded']
         # downloaded_size += len(start)
         file_size=status_tracker[file_name]['File_Size']
-        
         # print('\n')
         # print(f'start{start}')
         # print(f'end{end}')
         # print('\n')
-
         # print(f'dsize{downloaded_size}')
         # print(f'fsize{file_size}')
         # print(f'Partsize{part_size}')
@@ -237,28 +309,56 @@ async def download_task(session, url, start, end,file_name,file_save_path,save_s
         await asyncio.sleep(1)
         # while downloaded_size < part_size :
         while downloaded_size < end and status_tracker[file_name]['Status']:
-            print(status_tracker[file_name]['Status'])
-            print("from inside downloading")
-
+            # print("from inside downloading")
+            # print(status_tracker[file_name]['Status'])
             try:
-                chunk = await response.content.read(speed_limit)
+                # speed=await get_bandwith_speed(session,file_name,url)
+                speed=status_tracker[file_name]['Speed']
+
+                # speed=1024*1024
+                # print({"speed",speed})
+                # status_tracker[file_name]['Speed']=speed
+                # chunk = await response.content.readexactly(speed)
+                chunk = await asyncio.wait_for(response.content.read(speed), timeout=1)
+                # print(len(chunk))
+                if not chunk:
+                    print("no chunk")
+                    break  # Exit loop if no more data
+
+                # print({"chunk",len(chunk)})
                 # File_Bytes+=chunk
                 File_Bytes=chunk
                 downloaded_size += len(chunk)
                 status_tracker[file_name]['Downloaded']=downloaded_size
                 socketio.emit('progres', status_tracker)
-            except ConnectionError as e:
-                print(f"A connection error occurred: {str(e)}")
+            # except ConnectionError as e:
+            except asyncio.TimeoutError:
+                print(f"A connection error occurred: ")
+                internet=await retry_internet_check("")
+                if not internet:
+                    status_tracker[file_name]['Status'] = False
+                    socketio.emit('progres', status_tracker)
+                    return jsonify({'error': 'No internet connection'}), 503
                 continue
             except Exception as e:
-                print(f"An unexpected error occurred: {str(e)}")
-                continue
+                print('some other exception')
+                break
+
+
+            # except Exception as e:
+            #     internet=await retry_internet_check("")
+            #     if not internet:
+            #         status_tracker[file_name]['Status'] = False
+            #         socketio.emit('progres', status_tracker)
+            #         return jsonify({'error': 'No internet connection'}), 503
+            #     print(f"An unexpected error occurred: {str(e)}")
+            #     continue
+
             # data=await response.read()
             # print(status_tracker)
             # EMIT EVERY 1SECOND
-            
             # print(f'from --start:{start} downloading ---{get_file_size(downloaded_size)}--- filesize:{get_file_size(file_size)}: --end:{get_file_size(end)}')
-            await asyncio.sleep(0.9)
+            await asyncio.sleep(0.2)
             await write_chunk_to_file(file_save_path,File_Bytes,file_name,save_state_file)
 
         # print(f'fbytes {len(File_Bytes)}')
@@ -303,6 +403,7 @@ def stop_files(file_names=None,all=None):
 
     for file_name in file_names:
         status_tracker[file_name]['Status'] = False
+        socketio.emit('progres', status_tracker)
         # downloads[file_name]['Status']=False
         # Item=status_tracker[file_name]['Status'] or True
         print("stopped filed")
@@ -350,6 +451,7 @@ def resume_files(file_names=None,all=None):
         if not Item:
             print("resuming")
             status_tracker[file_name]['Status'] = True
+            socketio.emit('progres', status_tracker)
             # downloads[file_name]['Status']=True
             file_info = status_tracker[file_name]
             asyncio.run(download_file(file_info))
@@ -402,8 +504,8 @@ def delete_files(file_names=None,all=None):
     if all:
         file_names = list(status_tracker.keys())
 
-    print({"all":all})
-    print({"f":file_names})
+    # print({"all":all})
+    # print({"f":file_names})
     for file_name in file_names:
         Item=status_tracker.get(file_name) or None
         if Item.get('Status'):
@@ -413,10 +515,14 @@ def delete_files(file_names=None,all=None):
         file_save_path = os.path.join( SAVE_DIR, file_name)
         if os.path.exists(file_save_path) :
             os.remove(file_save_path)
+        socketio.emit('progres', status_tracker)
+
     write_status_file(status_tracker)
     
 @app.route('/delete_download', methods=['POST'])
 def delete_download():
+    global status_tracker
+
     data = request.get_json()
     all = data.get('all') or None
     save_state_file = os.path.join(SAVE_DIR,STATUS_DOWNLOAD_FILE)
@@ -435,9 +541,10 @@ def delete_download():
             delete_files(file_names,None)
             rs=f"the selected files are deleted"
             
-        status_tracker=read_status_file()
-        print(status_tracker)
-        socketio.emit('progres', status_tracker)
+        # status_tracker=read_status_file()
+        # print(status_tracker)
+        # socketio.emit('progres', status_tracker)
+
     return Response(rs, status=200, mimetype='application/json')
 
 @app.route('/resume', methods=['GET'])

@@ -44,7 +44,7 @@ function New_Download({
     Time_Left: 0,
     File_Size: 10000,
     FileName: "",
-    SavePath: "./",
+    SavePath: "./downloads/",
     Resume: true,
   };
 

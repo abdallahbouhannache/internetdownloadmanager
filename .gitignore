@@ -41,3 +41,4 @@ out/
 **/**/download_state.json.env
 .env
 
+/src/server/downloads
