@@ -3,15 +3,22 @@ import os
 import aiofiles
 from flask import Flask, render_template
 from flask_socketio import SocketIO, emit
-# from flask_cors import CORS
 from watchdog.observers import Observer
 from watchdog.events import FileSystemEventHandler
 import jsonpatch
 import bson
 
+from tool import read_status_file 
+
+from Constants import STATUS_DOWNLOAD_FILE ,SAVE_DIR 
+import Constants
+
+# from flask_cors import CORS
 # app = Flask(__name__)
 # app.config['SECRET_KEY'] = 'your-secret-key'
 # CORS(app,resources={r"/*":{"origins":"*"}})
+
+SAVE_STATE_FILE = os.path.join(SAVE_DIR, STATUS_DOWNLOAD_FILE)
 
 class FileChangeHandler(FileSystemEventHandler):
     def __init__(self, socketio,loop):
@@ -19,7 +26,7 @@ class FileChangeHandler(FileSystemEventHandler):
         self.loop = loop
 
     def on_modified(self, event):
-        if not event.is_directory and event.src_path == "./download_state.bson":
+        if not event.is_directory and event.src_path == SAVE_STATE_FILE:
             print('modified DETECTION bef handle')
             asyncio.run_coroutine_threadsafe(self.handle_modified(event.src_path), self.loop)
 
@@ -35,8 +42,8 @@ def start_observer(socketio):
     @socketio.on('connect')
     def handle_connect():
         # start_observer(socketio)
-        if os.path.exists("./download_state.bson"):
-            with open("./download_state.bson", 'rb') as file:
+        if os.path.exists(SAVE_STATE_FILE):
+            with open(SAVE_STATE_FILE, 'rb') as file:
                 bson_data = file.read()
                 downloads_state = bson.loads(bson_data)
                 # print(f"downloads_state:{downloads_state}")
@@ -50,9 +57,9 @@ def start_observer(socketio):
         # observer.join()
         print('socket backend :Client disconnected')
 
-    @socketio.on('progres')
-    def handle_progres(data):
-        print('socket backend :sending you files status ', data)
+    # @socketio.on('progres')
+    # def handle_progres(data):
+    #     print('socket backend :sending you files status ', data)
         # with open("./download_state.bson", 'rb') as file:
         #     bson_data = file.read()
         #     # Decode BSON data
@@ -65,8 +72,20 @@ def start_observer(socketio):
         print('socket backend : Received message ', msg)
         socketio.emit('message', 'yes am here:sent from backend')
 
-def run_observer(socketio):
-    start_observer(socketio)
+def get_socketio():
+    global Constants
+    return Constants.socketio
+
+def get_status():
+    status_tracker=read_status_file()
+    return status_tracker
+
+def run_observer(app):
+    global Constants
+    Constants.socketio = SocketIO(app,cors_allowed_origins="*")
+    # print("inobserver",Constants.socketio)
+
+    start_observer(Constants.socketio)
     # socketio = SocketIO(app)
     # socketio = SocketIO(app,cors_allowed_origins="*")
     # socketio.run(app, debug=True,port=5001)

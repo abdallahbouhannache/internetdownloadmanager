@@ -7,3 +7,105 @@ https://edge08.111.ir.cdn.ir/Files/Software/Microsoft_Edge_117.0.2045.31_Stable_
 
 
 curl -X POST -H "Content-Type: application/json" -d '{"url":"https://edge08.111.ir.cdn.ir/Files/Software/Microsoft_Edge_117.0.2045.31_Stable_Multilingual_x86_Downloadly.ir.rar","path":"./document.rar","speed":100}' http://localhost:5000/download_file
+
+
+
+async def async_task():
+ print("asyncio completed")
+ await asyncio.sleep(1)
+ return "asyncio completed"
+
+
+
+# from observer_socket import start_observer
+# import observer_socket
+# from socket import SocketIO
+# from quart import Quart
+# app = Quart(__name__)
+# loop = asyncio.get_event_loop()
+# socketio = SocketIO(app)
+# CORS(app)
+
+
+
+# @app.route('/prepare_download_file', methods=['POST'])
+# async def download_header():
+
+#     print("grabbing file details")
+#     file_infos = request.get_json()
+#     print(file_infos)
+
+#     file_url = file_infos.get('Url') or None
+#     save_dir = file_infos.get('SavePath') or "./"
+#     Catg=file_infos.get('Catg') or "UNKNOWN"
+#     speed_limit = file_infos.get('Speed') or None
+#     file_name = file_infos.get('FileName') or os.path.basename(file_url) 
+#     command = file_infos.get('Cmd_Option') or "new" # values continue,restart,new
+#     save_state_file = os.path.join(save_dir, 'download_state.bson')
+#     random_id = file_infos.get('id') or None
+
+#     localDownload = {}
+#     downloaded_size=0
+#     if not random_id:
+#         import uuid
+#         random_id = uuid.uuid1()
+
+#     response = requests.head(file_url)
+#     file_size = int(response.headers.get('Content-Length', 0)) or 0
+    
+#     print("OVER HERE  !!!!!!")
+
+#     if not file_name :
+#         content_disposition = response.headers.get('Content-Disposition')
+#         file_name = get_filename_from_content_disposition(content_disposition)
+
+#     # Load the state from the save_state_file, if it exists
+#     if os.path.exists(save_state_file):
+#         with open(save_state_file, mode='rb') as state_file:
+#             print('reading the file')
+#             bson_data =state_file.read()
+#         # Decode BSON data
+#         localDownload = bson.loads(bson_data)
+#     file_save_path = os.path.join(save_dir, file_name)
+
+
+#     if localDownload.get(file_name):
+#         if command=="restart":
+#             os.remove(file_save_path)
+#         elif command=="continue":
+#             downloaded_size=os.path.getsize(file_save_path)
+#             # if downloaded_size:
+#             #     localDownload[file_name]['Downloaded']=downloaded_size  
+#             # print("continue download of file_name from Downloaded ****")
+#         elif command=="new":
+#             # verify if not a continue|resume request ...
+#             [file_name,ext]=file_name.split('.')
+#             pattern = re.compile(f'^{re.escape(file_name)}(\(\d+\))?.{re.escape(ext)}$')
+#             content_dir=os.listdir(save_dir)
+#             # print(content_dir)
+#             # file_count=content_dir.count(pattern)
+#             matching_files = [f for f in content_dir if pattern.match(f)]
+#             file_count = len(matching_files)
+#             # print(file_name,ext)
+#             # print(f'file_count {file_count}')
+#             file_name=f'{file_name}({file_count+1}).{ext}'
+#             file_save_path = os.path.join(save_dir, file_name)
+
+#     # building file entry in database
+#     localDownload[file_name] = {
+#     "id": random_id,
+#     "Url": file_url,
+#     "Status": True,
+#     "Downloaded": downloaded_size,
+#     "Cmd_Option": command,
+#     "Speed": speed_limit,
+#     "Catg":Catg,
+#     "FileName":file_name,
+#     "Time_Left": 0,
+#     "File_Size": file_size,
+#     "SavePath": save_dir,
+#     "Resume": False,
+#     }
+
+#     return jsonify(localDownload[file_name])
+#     # socketio.emit('filed', localDownload[file_name])
