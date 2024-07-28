@@ -3,12 +3,16 @@
 from tool import get_bandwith_speed,write_chunk_to_file,retry_internet_check, read_status_file ,write_status_file
 
 import os
+import re
+
 import aiohttp
 import asyncio
 import aiofiles
 import bson
 
 import Constants
+import requests
+
 
 from observer_socket import get_socketio,get_status
 
@@ -206,3 +210,60 @@ async def download_task(session, url, start, end,file_name,file_save_path,save_s
         await asyncio.sleep(1)
         # response.release()
 
+
+
+def get_file_name(FullFileName):
+
+    [file_name, ext] = FullFileName.rsplit(".",1) or [
+        "download",
+        "html",
+      ]
+    pattern = re.compile(f'^{re.escape(file_name)}(\\(\\d+\\))?\\.{re.escape(ext)}$')
+    matching_files = [key for key in Constants.status_tracker.keys() if pattern.match(key)]
+    file_count = f'({len(matching_files)})' if len(matching_files) else ""
+    print("filecount",file_count)
+    print("filecount",Constants.status_tracker)
+    unique_file_name=f'{file_name}{file_count}.{ext}'
+    return unique_file_name,ext
+
+
+def get_file_info(url):
+    print("get_file_info")
+
+    info = {
+        'FileName':"download.html",
+        'ext':"html",
+        'File_Size':0,
+        # 'status_code': response.status_code,
+        # 'content_length': response.headers.get('Content-Length'),
+        # 'content_type': response.headers.get('Content-Type'),
+        # 'last_modified': response.headers.get('Last-Modified')
+    }
+    try:
+        # Make a HEAD request to get file metadata quickly
+        response = requests.head(url, allow_redirects=True,timeout=3)
+        content_length = response.headers.get('Content-Length')
+        print("response",response)
+        # Extract and return relevant information
+        if content_length is None:
+            print("Unable to retrieve file size.")
+            return None, None
+        else:
+            file_size = int(content_length)
+            # Extracting filename from URL
+            filename = url.split("/")[-1]
+            
+            info={
+                'File_Size':file_size,
+            }
+            name,ext=get_file_name(filename)
+            info['FileName']=name
+            info['ext']=ext
+        
+        print(info)
+        return info
+    
+    except requests.RequestException as e:
+        # Handle exceptions (e.g., network errors)
+        print(f"An error occurred: {e}")
+        return info

@@ -8,7 +8,7 @@ from observer_socket import get_socketio
 
 from HandleDownload import download_file
 
-from tool import read_status_file ,write_status_file
+from tool import read_status_file , write_status_file
   
 # def get_filename_from_content_disposition(content_disposition):
 #     if content_disposition:
@@ -19,12 +19,11 @@ from tool import read_status_file ,write_status_file
 #                 return filename
 #     return 'downloaded_file.html'
 
-def stop_files(file_names=None,all=None):
+async def stop_files(file_names=None,all=None):
     # global downloads
     global Constants
 
     # Constants.status_tracker=get_status()
-    
     socketio=get_socketio()
     print("socketio",socketio)
 
@@ -46,10 +45,9 @@ def stop_files(file_names=None,all=None):
         #     status_tracker[file_name]['Status'] = False
 
     time.sleep(0.05)
-    write_status_file(Constants.status_tracker)
+    await write_status_file(Constants.status_tracker)
 
-def resume_files(file_names=None,all=None):
-    
+async def resume_files(file_names=None,all=None):
     # global downloads
     global Constants
 
@@ -68,15 +66,14 @@ def resume_files(file_names=None,all=None):
             # downloads[file_name]['Status']=True
             file_info = Constants.status_tracker[file_name]
             asyncio.run(download_file(file_info))
-
             # lop = asyncio.get_event_loop()
             # lop.create_task(download_file(file_info))
 
     time.sleep(0.05)
-    write_status_file(Constants.status_tracker)
+    await write_status_file(Constants.status_tracker)
 
 
-def delete_files(file_names=None,all=None):
+async def delete_files(file_names=[],all=None):
 
     global Constants
 
@@ -93,9 +90,10 @@ def delete_files(file_names=None,all=None):
             Item['Status'] = False
             # time.sleep(0.2)
         del Constants.status_tracker[file_name]
+        print(Constants.status_tracker)
         file_save_path = os.path.join( SAVE_DIR, file_name)
         if os.path.exists(file_save_path) :
             os.remove(file_save_path)
         socketio.emit('progres', Constants.status_tracker)
 
-    write_status_file(Constants.status_tracker)
+    await write_status_file(Constants.status_tracker)

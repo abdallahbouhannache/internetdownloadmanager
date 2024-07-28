@@ -5,9 +5,6 @@ import { CATEGORY_TYPES } from "../Constant/Constant";
 import swal from "sweetalert";
 import { Bounce, Slide, toast } from "react-toastify";
 
-
-
-
 export function Dowload_Actions() {
   const { downloads, refreshDownload, initDownloads } = useAppState();
 
@@ -32,7 +29,6 @@ export function Dowload_Actions() {
 
     socket.current.on("load", (data) => {
       initDownloads(data);
-      
     });
 
     socket.current.on("progres", (refreshData) => {
@@ -107,7 +103,7 @@ export const IdmReq = () => {
   // the store manager
   const { NewItem, CreateReq, CurrentRow, SetCurrentRow } = useIdmRequests();
 
-  const { downloads,addDownload, refreshDownload } = useAppState();
+  const { downloads, addDownload, refreshDownload } = useAppState();
 
   // @ts-ignore
   const cat_selector = (ext: string) => {
@@ -135,29 +131,55 @@ export const IdmReq = () => {
         Resume: true,
         Finished: false,
       };
-      // add handling if no result or error in head
-      const response1 = await axios.head(url);
-      const contentDisposition = response1.headers["content-disposition"];
-      newData["File_Size"] = parseInt(response1.headers["content-length"], 10);
-      if (contentDisposition) {
-        newData["FileName"] = contentDisposition.split("filename=")[0];
-      } else {
-        newData["FileName"] = url.split("/").pop().trim();
-      }
-      let [file_name, ext] = newData["FileName"].split(".") || ["download","html"];
+
+      const flaskAppUrl = "http://localhost:5001";
+
+      const urlParam = encodeURIComponent(url); // Example URL
+
+      const response1 = await axios.get(`${flaskAppUrl}/file-info`, {
+        params: {
+          file_url: urlParam,
+        },
+      });
+
+      // console.log(responsexdd);
+      // return;
+      // const response1 = await axios.head(url);
+
+      // const contentDisposition = response1.headers["content-disposition"];
+      // newData["File_Size"] = parseInt(response1.headers[" content-length"], 10);
+      // if (contentDisposition) {
+      //   newData["FileName"] = contentDisposition.split("filename=")[0];
+      // } else {
+      //   newData["FileName"] = url.split("/").pop().trim();
+      // }
+      console.log(response1);
+      let {ext,...fileinfos}=response1["data"] 
+      
+      newData = { ...newData,...fileinfos };
+      console.log(newData);
+      
+      
+      // let [file_name, ext] = newData["FileName"].split(".") || [
+      //   "download",
+      //   "html",
+      // ];
+
+      
+      
+      // const response2 = await axios.get("http://localhost:5001/get_file_name", {
+      //   params: {
+      //     name: file_name,
+      //     ext: ext,
+      //   },
+      // });
+
+      // newData["FileName"] = response2.data;
 
       newData["id"] = uuidv4();
       newData["Catg"] = cat_selector(ext);
 
-      const response2 = await axios.get("http://localhost:5001/get_file_name", {
-        params: {
-          name: file_name,
-          ext: ext,
-        },
-      });
-
-      newData["FileName"] = response2.data;
-      console.log(newData);
+      
       CreateReq(newData);
 
       return newData;
@@ -186,35 +208,33 @@ export const IdmReq = () => {
     axios.post("http://localhost:5001/download_file", data).then((response) => {
       console.log({ "download_file_server_response ended": response });
     });
-    
   };
 
   const ContinueItems = async (par) => {
-    console.log({par});
-    console.log(par.rows[0]['FileName']);
+    console.log({ par });
+    console.log(par.rows[0]["FileName"]);
 
     // let name=par.rows[0]['FileName']
     // downloads[name]['Status']=true
 
     // let thedownload = {...downloads};
     // console.log("downloads",downloads[name]);
-    
+
     axios
-    .post("http://localhost:5001/resume_download", par)
-    .then((response) => {
-      // refreshDownload();
+      .post("http://localhost:5001/resume_download", par)
+      .then((response) => {
+        // refreshDownload();
         // refreshDownload(downloads);
         console.log({ "download_file_server_response ended": response });
       });
   };
 
   const StopItems = async (par) => {
-    
     // let name=par.rows[0]['FileName']
     // downloads[name]['Status']=false
     // refreshDownload(downloads);
     console.log(par);
-    
+
     axios.post("http://localhost:5001/stop_download", par).then((res) => {
       // if(res.status==200){
       // }
@@ -237,7 +257,6 @@ export const IdmReq = () => {
         axios
           .post("http://localhost:5001/delete_download", par)
           .then((response) => {
-            
             let info = "Selected Files Were Deleted";
             toast(info, {
               position: "bottom-right",

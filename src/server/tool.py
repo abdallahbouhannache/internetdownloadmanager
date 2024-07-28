@@ -8,8 +8,6 @@ import bson
 import os
 import aiofiles
 
-
-
 async def get_bandwith_speed(session, file_name,url, init_test_size=1024*1024):  # Test size 1MB
     
     global Constants
