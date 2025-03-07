@@ -22,14 +22,14 @@ from tool import read_status_file , write_status_file
 async def stop_files(file_names=None,all=None):
     # global downloads
     global Constants
-
+    
     # Constants.status_tracker=get_status()
     socketio=get_socketio()
-    print("socketio",socketio)
+    # print("socketio",socketio)
 
-    print("status_tracke before",Constants.status_tracker)
-    Constants.status_tracker=read_status_file()
-    print("status_tracker",Constants.status_tracker)
+    # print("status_tracke before",Constants.status_tracker)
+    Constants.status_tracker=await read_status_file()
+    # print("status_tracker",Constants.status_tracker)
     
 
     if all:
@@ -52,7 +52,7 @@ async def resume_files(file_names=None,all=None):
     global Constants
 
     socketio=get_socketio()
-    Constants.status_tracker=read_status_file()
+    Constants.status_tracker=await read_status_file()
 
     if all:
         file_names = list(Constants.status_tracker.keys())
@@ -64,8 +64,11 @@ async def resume_files(file_names=None,all=None):
             Constants.status_tracker[file_name]['Status'] = True
             socketio.emit('progres', Constants.status_tracker)
             # downloads[file_name]['Status']=True
-            file_info = Constants.status_tracker[file_name]
-            asyncio.run(download_file(file_info))
+            file_infos = Constants.status_tracker[file_name]
+            await download_file(file_infos)
+
+            # asyncio.create_task(download_file(file_info))
+            # asyncio.run(download_file(file_info))
             # lop = asyncio.get_event_loop()
             # lop.create_task(download_file(file_info))
 
@@ -78,7 +81,8 @@ async def delete_files(file_names=[],all=None):
     global Constants
 
     socketio=get_socketio()
-    Constants.status_tracker=read_status_file()
+    Constants.status_tracker=await read_status_file()
+
     if all:
         file_names = list(Constants.status_tracker.keys())
 
@@ -86,11 +90,11 @@ async def delete_files(file_names=[],all=None):
     # print({"f":file_names})
     for file_name in file_names:
         Item=Constants.status_tracker.get(file_name) or None
-        if Item.get('Status'):
+        if Item and Item.get('Status'):
             Item['Status'] = False
             # time.sleep(0.2)
         del Constants.status_tracker[file_name]
-        print(Constants.status_tracker)
+        # print(Constants.status_tracker)
         file_save_path = os.path.join( SAVE_DIR, file_name)
         if os.path.exists(file_save_path) :
             os.remove(file_save_path)

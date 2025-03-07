@@ -75,7 +75,7 @@ function New_Download({
     // data["SavePath"]=v;
     // setLocalData({...LocalData,'SavePath':v})
     // setSelectdPath("./")
-    console.log("handleSavePath");
+    // console.log("handleSavePath");
     try {
       const dirHandle = await window.showDirectoryPicker();
       
@@ -91,20 +91,20 @@ function New_Download({
   };
 
   const handleCancel = () => {
-    console.log("handleCancel pressed");
+    // console.log("handleCancel pressed");
     handleClose();
   };
 
   const handleLater = () => {
-    console.log(LocalData);
+    // console.log(LocalData);
     setLocalData({ ...LocalData, Status: false });
     DownloadLater(LocalData);
-    console.log("handleLater pressed to add to store and download it later");
+    // console.log("handleLater pressed to add to store and download it later");
   };
 
   const handleDownload = () => {
     startProgress(LocalData);
-    console.log("start download btn pressed");
+    // console.log("start download btn pressed");
   };
 
   return (

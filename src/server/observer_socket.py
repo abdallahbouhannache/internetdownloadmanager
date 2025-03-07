@@ -20,23 +20,23 @@ import Constants
 
 SAVE_STATE_FILE = os.path.join(SAVE_DIR, STATUS_DOWNLOAD_FILE)
 
-class FileChangeHandler(FileSystemEventHandler):
-    def __init__(self, socketio,loop):
-        self.socketio = socketio
-        self.loop = loop
+# class FileChangeHandler(FileSystemEventHandler):
+#     def __init__(self, socketio,loop):
+#         self.socketio = socketio
+#         self.loop = loop
 
-    def on_modified(self, event):
-        if not event.is_directory and event.src_path == SAVE_STATE_FILE:
-            print('modified DETECTION bef handle')
-            asyncio.run_coroutine_threadsafe(self.handle_modified(event.src_path), self.loop)
+#     def on_modified(self, event):
+#         if not event.is_directory and event.src_path == SAVE_STATE_FILE:
+#             print('modified DETECTION bef handle')
+#             asyncio.run_coroutine_threadsafe(self.handle_modified(event.src_path), self.loop)
 
-    async def handle_modified(self, file_path):
-        print('handle_modified CALLED')
-        async with aiofiles.open(file_path, mode='rb') as state_file:
-            print('SENDING CHANGES TOWARD FRONT')
-            bson_data = await state_file.read()
-            downloads_state = bson.loads(bson_data)
-            self.socketio.emit('progres', downloads_state)
+#     async def handle_modified(self, file_path):
+#         print('handle_modified CALLED')
+#         async with aiofiles.open(file_path, mode='rb') as state_file:
+#             print('SENDING CHANGES TOWARD FRONT')
+#             bson_data = await state_file.read()
+#             downloads_state = bson.loads(bson_data)
+#             self.socketio.emit('progres', downloads_state)
 
 def start_observer(socketio):
     @socketio.on('connect')
@@ -44,11 +44,12 @@ def start_observer(socketio):
         # start_observer(socketio)
         if os.path.exists(SAVE_STATE_FILE):
             with open(SAVE_STATE_FILE, 'rb') as file:
-                bson_data = file.read()
-                downloads_state = bson.loads(bson_data)
-                # print(f"downloads_state:{downloads_state}")
-                emit('load', downloads_state)
+                bson_data = file.read()                
+                if bson_data:
+                    Constants.status_tracker = bson.loads(bson_data)
 
+                emit('load', Constants.status_tracker)
+                # print(f"downloads_state:{downloads_state}")
         print('socket backend : Client connected')
 
     @socketio.on('disconnect')
@@ -77,15 +78,14 @@ def get_socketio():
     return Constants.socketio
 
 def get_status():
-    status_tracker=read_status_file()
-    return status_tracker
+    status_track=read_status_file()
+    return status_track
 
 def run_observer(app):
     global Constants
-    Constants.socketio = SocketIO(app,cors_allowed_origins="*")
-    # print("inobserver",Constants.socketio)
-
+    Constants.socketio = SocketIO(app,cors_allowed_origins="*",async_mode='threading')
     start_observer(Constants.socketio)
+    # print("inobserver",Constants.socketio)
     # socketio = SocketIO(app)
     # socketio = SocketIO(app,cors_allowed_origins="*")
     # socketio.run(app, debug=True,port=5001)

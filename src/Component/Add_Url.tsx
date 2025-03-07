@@ -10,9 +10,10 @@ function Add_Url({ show, handleClose, openNewDownload }) {
   const urlRegex = /^(https?:\/\/)?([\da-z\.-]+)\.([a-z\.]{2,6})([\/\w \.-]*)*\/?$/;
 
   const isUrl = (url) => {
-    if (!url) return false; // Check if the URL is empty
+    if (!url || typeof url !== 'string') return false; // Check if the URL is empty
     return urlRegex.test(url); // Test the URL against the regex
   };
+
 
   const begin = () => {
     if (isUrl(newUrl)) {

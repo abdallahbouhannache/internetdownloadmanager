@@ -99,7 +99,6 @@ async def resume_download():
     else:
         file_names=[]
         if all:
-            
             res=f"All files are resumed"
         else:
             res=f"the selected files are resumed"
@@ -123,6 +122,9 @@ async def delete_download():
     save_state_file = os.path.join(SAVE_DIR,STATUS_DOWNLOAD_FILE)
 
     if not os.path.exists(save_state_file):
+        # global Constants
+        # Constants.status_tracker={}
+
         # print("error no file is on download")
         rs=f"error file status not found"
         # return Response(rs, status=200, mimetype='application/json')

@@ -88,14 +88,14 @@ function NavHead() {
 
   const handleAddClick = () => {
     displayAddUrl(!addUrlON);
-    console.log("open download");
+    // console.log("open download");
   };
 
   const handleContinueClick = () => {
     const par = {};
     par["rows"] = [CurrentRow];
     if (CurrentRow) {
-      console.log(CurrentRow);
+      // console.log(CurrentRow);
       par["rows"].length == 1 && displayProgress(!progressON);
       let data = {
         id: par["rows"][0].id ||  "",
@@ -108,17 +108,17 @@ function NavHead() {
       
       idmR.ContinueItems(par)
     }
-    console.log("continue clicked");
+    // console.log("continue clicked");
   };
 
   const handleStopClick = () => {
-    console.log(CurrentRow);
+    // console.log(CurrentRow);
     const par = {};
     par["rows"] = [CurrentRow];
     if (CurrentRow) {
       idmR.StopItems(par);
     }
-    console.log("stop clicked");
+    // console.log("stop clicked");
   };
 
   const handleRemoveItems = () => {
@@ -127,14 +127,14 @@ function NavHead() {
     if (CurrentRow) {
       idmR.DelItems(par);
     }
-    console.log("selected item has been removed");
+    // console.log("selected item has been removed");
   };
 
   const handleDelAll = () => {
     const par = {};
     par["all"] = true;
     idmR.DelItems(par);
-    console.log("all items has been removed");
+    // console.log("all items has been removed");
   };
 
   return (

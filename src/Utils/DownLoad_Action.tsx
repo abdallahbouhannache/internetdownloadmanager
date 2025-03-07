@@ -24,7 +24,7 @@ export function Dowload_Actions() {
         theme: "light",
         transition: Bounce,
       });
-      console.log("Connected to socket  server");
+      // console.log("Connected to socket  server");
     });
 
     socket.current.on("load", (data) => {
@@ -32,20 +32,20 @@ export function Dowload_Actions() {
     });
 
     socket.current.on("progres", (refreshData) => {
-      console.log(refreshData);
-      console.log("progres refresh");
+      // console.log(refreshData);
+      // console.log("progres refresh");
       refreshDownload(refreshData);
     });
 
     socket.current.on("disconnect", () => {
-      console.log("Disconnected from server");
+      // console.log("Disconnected from server");
     });
   };
 
   const Follow_Progress_Item = (socket) => {
     socket.current.on("progres", (refreshData) => {
-      console.log("Refreshing single progres item  from downloads from server");
-      console.log({ refreshData: refreshData });
+      // console.log("Refreshing single progres item  from downloads from server");
+      // console.log({ refreshData: refreshData });
     });
   };
 
@@ -67,35 +67,35 @@ export function Dowload_Actions() {
 
 export function InitSocketSession(socket) {
   const { downloads, refreshDownload } = useAppState();
-  console.log("trying to initiate socket connect");
+  // console.log("trying to initiate socket connect");
   socket.current.connect();
 
   // Handle connection events
   socket.current.on("connect", () => {
-    console.log("Connected to socket  server");
+    // console.log("Connected to socket  server");
   });
 
   socket.current.on("disconnect", () => {
-    console.log("Disconnected from server");
+    // console.log("Disconnected from server");
   });
 }
 
 export function Follow_Progress_Item(socket) {
   socket.current.on("progres", (refreshData) => {
-    console.log("Refreshing singe item  from downloads from server");
+    // console.log("Refreshing singe item  from downloads from server");
     console.log(refreshData);
   });
 }
 
 export function Follow_Progress_bundle(socket) {
   socket.current.on("progres", (refreshData) => {
-    console.log("Refreshing data from downloads from server");
+    // console.log("Refreshing data from downloads from server");
   });
 }
 
 export const StopListeners = (socket) => {
   socket.current.off("progres");
-  console.log("stopped progress");
+  // console.log("stopped progress");
 };
 
 // function
@@ -153,11 +153,12 @@ export const IdmReq = () => {
       // } else {
       //   newData["FileName"] = url.split("/").pop().trim();
       // }
-      console.log(response1);
+      // console.log(response1);
       let {ext,...fileinfos}=response1["data"] 
       
       newData = { ...newData,...fileinfos };
-      console.log(newData);
+      // console.log("newData down |>");
+      // console.log(newData);
       
       
       // let [file_name, ext] = newData["FileName"].split(".") || [
@@ -206,26 +207,23 @@ export const IdmReq = () => {
 
     addDownload(newFileD);
     axios.post("http://localhost:5001/download_file", data).then((response) => {
-      console.log({ "download_file_server_response ended": response });
+      // console.log({ "download_file_server_response ended": response });
     });
   };
 
   const ContinueItems = async (par) => {
-    console.log({ par });
-    console.log(par.rows[0]["FileName"]);
-
+    // console.log({ par });
+    // console.log(par.rows[0]["FileName"]);
     // let name=par.rows[0]['FileName']
     // downloads[name]['Status']=true
-
     // let thedownload = {...downloads};
     // console.log("downloads",downloads[name]);
-
     axios
       .post("http://localhost:5001/resume_download", par)
       .then((response) => {
+        // console.log({ "download_file_server_response ended": response });
         // refreshDownload();
         // refreshDownload(downloads);
-        console.log({ "download_file_server_response ended": response });
       });
   };
 
@@ -233,12 +231,12 @@ export const IdmReq = () => {
     // let name=par.rows[0]['FileName']
     // downloads[name]['Status']=false
     // refreshDownload(downloads);
-    console.log(par);
+    // console.log(par);
 
     axios.post("http://localhost:5001/stop_download", par).then((res) => {
       // if(res.status==200){
       // }
-      console.log({ "download_file_server_response ended": res });
+      // console.log({ "download_file_server_response ended": res });
     });
   };
 
@@ -273,14 +271,14 @@ export const IdmReq = () => {
       }
     });
 
-    return;
-    axios.post("http://localhost:5001/delete_download", par).then((rs) => {
-      if (rs["status"] == 200) {
-        console.log("file deleted from list", rs.data["rs"]);
-      } else {
-        console.log("file not found on download list", rs.data["rs"]);
-      }
-    });
+    // return;
+    // axios.post("http://localhost:5001/delete_download", par).then((rs) => {
+    //   if (rs["status"] == 200) {
+    //     console.log("file deleted from list", rs.data["rs"]);
+    //   } else {
+    //     console.log("file not found on download list", rs.data["rs"]);
+    //   }
+    // });
   };
 
   return {

@@ -1,6 +1,6 @@
+
 from Constants import STATUS_DOWNLOAD_FILE ,SAVE_DIR 
 import Constants
-
 import time
 import asyncio
 import requests
@@ -12,7 +12,7 @@ async def get_bandwith_speed(session, file_name,url, init_test_size=1024*1024): 
     
     global Constants
 
-    Constants.status_tracker=read_status_file()
+    Constants.status_tracker=await read_status_file()
 
     headers = {'Range': f'bytes=0-{init_test_size-1}'}
     receivedData=0
@@ -28,8 +28,8 @@ async def get_bandwith_speed(session, file_name,url, init_test_size=1024*1024): 
                     chunk = await response.content.readexactly(test_size_bytes)
                     # chunk = await asyncio.wait_for(response.content.readexactly(test_size_bytes), timeout=1)
                     receivedData=len(chunk)
-                    print(test_size_bytes)
-                    print(receivedData)
+                    # print(test_size_bytes)
+                    # print(receivedData)
                     break  # Success, exit the loop
                 except Exception as e:
                     factor+=1
@@ -73,19 +73,27 @@ async def retry_internet_check(url, max_retries=5, delay=1):
 
 
 
-def read_status_file():
-    # global downloads
+async def read_status_file():
+    print("inside read_status")
+    global Constants
     save_state_file = os.path.join(SAVE_DIR,STATUS_DOWNLOAD_FILE)
     try:
-        with open(save_state_file, mode='rb') as state_file:
-            bson_data =state_file.read()
-            downloads = bson.loads(bson_data)
-            return downloads
+        async with aiofiles.open(save_state_file, mode='rb') as state_file:
+            bson_data = await state_file.read()
+            Constants.status_tracker={}
+            if bson_data:
+                Constants.status_tracker = bson.loads(bson_data)
+                print("downloads inside readstatus-----")
+                print(Constants.status_tracker)
+                print("downloads inside readstatus-----")
+
+            return Constants.status_tracker
     except FileNotFoundError:
         # Create an empty file if it doesn't exist
-        initial_status = {}
-        write_status_file(initial_status)
-        return initial_status
+        # initial_status = {}
+        Constants.status_tracker={}
+        await write_status_file(Constants.status_tracker)
+        return Constants.status_tracker
 
 
 async   def  write_status_file(new_status):

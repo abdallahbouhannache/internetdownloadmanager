@@ -61,12 +61,12 @@ function App() {
     };
   }, []);
 
-  console.log("re-rendring the app");
+  // console.log("re-rendring the app");
 
 
   const sendMessage = (message) => {
     toast("Hello Geeks");
-    console.log(message);
+    // console.log(message);
   };
 
   return (

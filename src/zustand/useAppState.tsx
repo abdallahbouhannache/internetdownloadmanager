@@ -98,7 +98,7 @@ const useAppState = create<AppState>((set, get) => ({
   },
 
   refreshDownload: (comingData: { [FileName: string]: Download }) => {
-    console.log(comingData);
+    // console.log(comingData);
     set((state) => {
       state.downloads = {...comingData };
       return state.downloads;

@@ -18,7 +18,7 @@ const DataTable = ({ dataTable }) => {
 
   const handleRowDoubleClick = (e, row, rowIndex) => {
     e.stopPropagation();
-    console.log(`Double-clicked row ${rowIndex}:`, row, e);
+    // console.log(`Double-clicked row ${rowIndex}:`, row, e);
 
     let data = {
       id: row.id || "",
@@ -124,7 +124,7 @@ const DataTable = ({ dataTable }) => {
       setSelectedRowID(rowIndex);
       SetCurrentRow(item);
       // console.log(e.currentTarget);
-      console.log(`clicked on row with index: ${rowIndex}`);
+      // console.log(`clicked on row with index: ${rowIndex}`);
       // idmR.InitItem(url);
       // idmR.ContinueItem(item);
       // e.currentTarget.style.backgroundColor = "red";

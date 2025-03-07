@@ -2,6 +2,8 @@
 
 from tool import get_bandwith_speed,write_chunk_to_file,retry_internet_check, read_status_file ,write_status_file
 
+from flask import jsonify
+
 import os
 import re
 
@@ -17,7 +19,6 @@ import requests
 from observer_socket import get_socketio,get_status
 
 
-
 async def download_file(file_infos):
     # print("starting download_file")
     id = file_infos.get('id') or None
@@ -29,7 +30,7 @@ async def download_file(file_infos):
 
     # speed_limit = 80000
     downloaded_size = file_infos.get('Downloaded') or 0
-    save_dir = file_infos.get('SavePath') or "./downloads/"
+    save_dir = file_infos.get('SavePath') or "./downloads"
     command = file_infos.get('Cmd_Option') or "new" # values continue,restart,new
     save_state_file = os.path.join(save_dir, 'download_state.bson')
     file_save_path = os.path.join(save_dir, file_name)
@@ -38,7 +39,8 @@ async def download_file(file_infos):
     global Constants
     
     if os.path.exists(save_state_file):
-        Constants.status_tracker=get_status()
+        Constants.status_tracker= await read_status_file()
+        
 
         # with open(save_state_file, mode='rb') as state_file:
         #     # print('reading the file')
@@ -110,8 +112,8 @@ async def download_file(file_infos):
             write_status_file(Constants.status_tracker)
         
             socketio.emit('progres', Constants.status_tracker)
-            return jsonify({'error': 'Error starting download'}), 503
             print("error in fetching file")
+            return jsonify({'error': 'Error starting download'}), 503
             # return
 
 
@@ -186,7 +188,6 @@ async def download_task(session, url, start, end,file_name,file_save_path,save_s
                 Constants.status_tracker[file_name]['Status'] = False
                 write_status_file(Constants.status_tracker)
                 return jsonify({'error': 'some error happened try later'}), 503
-                
 
 
             # except Exception as e:
@@ -214,15 +215,18 @@ async def download_task(session, url, start, end,file_name,file_save_path,save_s
 
 def get_file_name(FullFileName):
 
+    global Constants 
+
     [file_name, ext] = FullFileName.rsplit(".",1) or [
         "download",
         "html",
       ]
     pattern = re.compile(f'^{re.escape(file_name)}(\\(\\d+\\))?\\.{re.escape(ext)}$')
     matching_files = [key for key in Constants.status_tracker.keys() if pattern.match(key)]
-    file_count = f'({len(matching_files)})' if len(matching_files) else ""
-    print("filecount",file_count)
-    print("filecount",Constants.status_tracker)
+    file_count = f'({len(matching_files)+1})' if len(matching_files) else ""
+
+    # print("filecount",file_count)
+    # print("filecount",Constants.status_tracker)
     unique_file_name=f'{file_name}{file_count}.{ext}'
     return unique_file_name,ext
 
@@ -260,7 +264,7 @@ def get_file_info(url):
             info['FileName']=name
             info['ext']=ext
         
-        print(info)
+        
         return info
     
     except requests.RequestException as e:
