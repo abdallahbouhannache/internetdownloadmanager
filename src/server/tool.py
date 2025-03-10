@@ -1,6 +1,6 @@
 
-from Constants import STATUS_DOWNLOAD_FILE ,SAVE_DIR 
-import Constants
+from constants import STATUS_DOWNLOAD_FILE ,SAVE_DIR ,idm_status
+# import constants
 import time
 import asyncio
 import requests
@@ -8,16 +8,19 @@ import bson
 import os
 import aiofiles
 
-async def get_bandwith_speed(session, file_name,url, init_test_size=1024*1024):  # Test size 1MB
-    
-    global Constants
+async def get_bandwith_speed(session, file_name,url, init_test_size=1024*1024,interval=0.2):  # Test size 1MB
 
-    Constants.status_tracker=await read_status_file()
-
+    idm_status.status_track=await read_status_file()
     headers = {'Range': f'bytes=0-{init_test_size-1}'}
     receivedData=0
-    while Constants.status_tracker[file_name]['Status']:
-        await asyncio.sleep(0.2)
+    rounded_speed=0
+    
+    while idm_status.status_track[file_name]['Status']:
+        if abs(rounded_speed) > 300000:
+            interval = min(interval + 0.1, 2.0)
+        else:
+            interval = max(interval - 0.1, 0.1)
+        await asyncio.sleep(interval)
         start_time = time.time()
         factor=1
         test_size_bytes = init_test_size
@@ -36,7 +39,7 @@ async def get_bandwith_speed(session, file_name,url, init_test_size=1024*1024): 
                     # Reduce test_size_bytes if readexactly fails
                     test_size_bytes -= 1024  # Example reduction, adjust as needed
                     if test_size_bytes <= 1024:
-                        Constants.status_tracker[file_name]['Speed']=test_size_bytes
+                        idm_status.status_track[file_name]['Speed']=10000
                         break
                         # return test_size_bytes
                         # raise Exception("Failed to read any data")
@@ -47,7 +50,7 @@ async def get_bandwith_speed(session, file_name,url, init_test_size=1024*1024): 
             # print({"datasize":receivedData ,"time",elapsed_time})
             # Round the speed to 2 decimal places
             rounded_speed = round(speed_in_bytes_per_second)
-            Constants.status_tracker[file_name]['Speed']=rounded_speed
+            idm_status.status_track[file_name]['Speed']=rounded_speed
             # return rounded_speed
 
 
@@ -70,33 +73,32 @@ async def retry_internet_check(url, max_retries=5, delay=1):
         print("Max retries reached. Cancelling download.")
         return False
 
-
-
-
 async def read_status_file():
-    print("inside read_status")
-    global Constants
-    save_state_file = os.path.join(SAVE_DIR,STATUS_DOWNLOAD_FILE)
-    try:
-        async with aiofiles.open(save_state_file, mode='rb') as state_file:
-            bson_data = await state_file.read()
-            Constants.status_tracker={}
-            if bson_data:
-                Constants.status_tracker = bson.loads(bson_data)
-                print("downloads inside readstatus-----")
-                print(Constants.status_tracker)
-                print("downloads inside readstatus-----")
+    print("reading status file")
 
-            return Constants.status_tracker
-    except FileNotFoundError:
-        # Create an empty file if it doesn't exist
-        # initial_status = {}
-        Constants.status_tracker={}
-        await write_status_file(Constants.status_tracker)
-        return Constants.status_tracker
+    # idm_status.status_track={}
+    save_state_file = os.path.join(SAVE_DIR,STATUS_DOWNLOAD_FILE)
+
+    async with idm_status.status_lock:
+        try:
+            async with aiofiles.open(save_state_file, mode='rb') as state_file:
+                bson_data = await state_file.read()
+                if bson_data:
+                    idm_status.status_track = bson.loads(bson_data)
+                    # print("inside readstatus-----")
+                    # print(idm_status.status_track)
+                # return idm_status.status_track    
+        except FileNotFoundError:
+            # Create an empty file if it doesn't exist
+            # initial_status = {}
+            await write_status_file(idm_status.status_track)
+            # return idm_status.status_track
+        return idm_status.status_track
 
 
 async   def  write_status_file(new_status):
+    print("writting status file")
+    async with idm_status.status_lock: 
         save_state_file = os.path.join(SAVE_DIR,STATUS_DOWNLOAD_FILE)
         async with aiofiles.open(save_state_file, 'wb') as state_file:
             bson_data = bson.dumps(new_status)
@@ -108,27 +110,24 @@ async   def  write_status_file(new_status):
 
 
 async def write_chunk_to_file(file_path,File_Bytes,file_name,save_state_file):
-
-    global Constants
-
     # print(downloads[file_name],"from writing to chunk")
-    if Constants.status_tracker[file_name]:
-        # print(f'appending {get_file_size(len(File_Bytes))}')
-        with open(file_path, 'ab') as file:
-            file.write(File_Bytes)
-        # print("keeping track of file")
-        async with aiofiles.open(save_state_file, 'wb') as state_file:
-            bson_data = bson.dumps(Constants.status_tracker)
-            await state_file.write(bson_data)
-            # print("end writing")
-    else:
-        # Constants.status_tracker[file_name]
-        pass
-        # here i do the creation of entry in the save_state_file to keep progress status
-        # for persever progress data of downloads 
-
-
-
+    print("writting chunks to downloaded file")
+    print(idm_status.status_track)
+    async with idm_status.file_lock: 
+        if idm_status.status_track[file_name]:
+            # print(f'appending {get_file_size(len(File_Bytes))}')
+            with open(file_path, 'ab') as file:
+                file.write(File_Bytes)
+            # print("keeping track of file")
+            async with aiofiles.open(save_state_file, 'wb') as state_file:
+                bson_data = bson.dumps(idm_status.status_track)
+                await state_file.write(bson_data)
+                # print("end writing")
+        # else:
+            # idm_status.status_track[file_name]
+            # pass
+            # here i do the creation of entry in the save_state_file to keep progress status
+            # for persever progress data of downloads 
 
 
 # def get_file_size(content_length):

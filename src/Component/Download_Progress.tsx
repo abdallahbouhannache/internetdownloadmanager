@@ -45,8 +45,8 @@ function Download_Progress({ dwAct, handleClose, show }) {
   };
 
   const data = [
-    { N_Part: 1, Downloaded: "362kb", Status: "finished" },
-    { N_Part: 2, Downloaded: "150kb", Status: "Downloading" },
+    { N_Part: 1, Downloaded: "0kb", Status: "finished" },
+    { N_Part: 2, Downloaded: "0kb", Status: "Downloading" },
   ];
 
   const columns = [
@@ -93,7 +93,7 @@ function Download_Progress({ dwAct, handleClose, show }) {
         {messages}
         <Modal.Header closeButton>
           <Modal.Title>
-            Downloading
+            Downloading {" "}
             {formatFileSize(downloadProgress["Downloaded"])}
           </Modal.Title>
         </Modal.Header>

@@ -29,17 +29,17 @@ const style = {
 };
 
 function NavHead() {
-  const defaultDownload = {
-    new_url: "",
-    savePath: "./downloads/",
-    name_file: "",
-    catg: "UNKNOWN",
-    size: 0,
-    speed_limit: 256,
-    command_option: "new",
-    downloaded: 0,
-    Resume: "false",
-  };
+  // const defaultDownload = {
+  //   new_url: "",
+  //   savePath: "./downloads/",
+  //   name_file: "",
+  //   catg: "UNKNOWN",
+  //   size: 0,
+  //   speed_limit: 256,
+  //   command_option: "new",
+  //   downloaded: 0,
+  //   Resume: "false",
+  // };
 
   const {
     displayProgress,

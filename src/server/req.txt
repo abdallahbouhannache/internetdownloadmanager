@@ -1,4 +1,4 @@
-Flask-SocketIO
+Flask-idm_status.socketio
 aiohttp
 aiofiles
 Flask-Cors

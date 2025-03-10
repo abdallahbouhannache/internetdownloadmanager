@@ -119,7 +119,7 @@ async def download_file():
     "Resume": False,
     }
 
-    # socketio.emit('filed', downloads[file_name])
+    # idm_status.socketio.emit('filed', downloads[file_name])
     
     # if os.path.exists(file_save_path):
     #     if os.path.getsize(file_save_path):
@@ -219,7 +219,7 @@ async def download_file():
                 byte_range += len(data)
                 downloads[file_name]['Downloaded']=byte_range
 
-                socketio.emit('progres', downloads)
+                idm_status.socketio.emit('progres', downloads)
                 print(f'downloading --{byte_range}')
                 print(downloads)
                 # print(f'downloaded :--->{get_file_size(chunk_size)}')
@@ -373,7 +373,7 @@ async def download_file():
     "Resume": False,
     }
 
-    # socketio.emit('filed', downloads[file_name])
+    # idm_status.socketio.emit('filed', downloads[file_name])
     
     # if os.path.exists(file_save_path):
     #     if os.path.getsize(file_save_path):
@@ -473,7 +473,7 @@ async def download_file():
                 byte_range += len(data)
                 downloads[file_name]['Downloaded']=byte_range
 
-                socketio.emit('progres', downloads)
+                idm_status.socketio.emit('progres', downloads)
                 print(f'downloading --{byte_range}')
                 print(downloads)
                 # print(f'downloaded :--->{get_file_size(chunk_size)}')
@@ -919,7 +919,7 @@ export const Desk = (): JSX.Element => {
 import asyncio
 import aiofiles
 from flask import Flask, render_template
-from flask_socketio import SocketIO, emit
+from flask_idm_status.socketio import idm_status.socketio, emit
 # from flask_cors import CORS
 from watchdog.observers import Observer
 from watchdog.events import FileSystemEventHandler
@@ -928,8 +928,8 @@ import bson
 
 
 class FileChangeHandler(FileSystemEventHandler):
-    def __init__(self, socketio,loop):
-        self.socketio = socketio
+    def __init__(self, idm_status.socketio,loop):
+        self.idm_status.socketio = idm_status.socketio
         self.loop = loop
 
     def on_modified(self, event):
@@ -943,43 +943,43 @@ class FileChangeHandler(FileSystemEventHandler):
             print('reading the file')
             bson_data = await state_file.read()
             downloads_state = bson.loads(bson_data)
-            self.socketio.emit('progres', downloads_state)
+            self.idm_status.socketio.emit('progres', downloads_state)
 
    
 
-def start_observer(socketio,loop):
+def start_observer(idm_status.socketio,loop):
     observer = Observer()
-    event_handler = FileChangeHandler(socketio,loop)
+    event_handler = FileChangeHandler(idm_status.socketio,loop)
     observer.schedule(event_handler, path='./', recursive=True)
     observer.start()
 
-    @socketio.on('connect')
+    @idm_status.socketio.on('connect')
     def handle_connect():
-        # start_observer(socketio)
+        # start_observer(idm_status.socketio)
         print('socket backend : Client connected')
 
-    @socketio.on('disconnect')
+    @idm_status.socketio.on('disconnect')
     def handle_disconnect():
         observer.stop()
         observer.join()
         print('socket backend :Client disconnected')
 
-    @socketio.on('progres1')
+    @idm_status.socketio.on('progres1')
     def handle_progres(data):
         print('socket backend :sending you files status ', data)
        
 
-    @socketio.on('message')
+    @idm_status.socketio.on('message')
     def handle_message(msg):
         print('socket backend : Received message ', msg)
-        socketio.emit('message', 'yes am here:sent from backend')
+        idm_status.socketio.emit('message', 'yes am here:sent from backend')
     
    
 def run(app):
-    socketio = SocketIO(app,cors_allowed_origins="*")
+    idm_status.socketio = idm_status.socketio(app,cors_allowed_origins="*")
     loop = asyncio.get_event_loop()
-    start_observer(socketio,loop)
-    socketio.run(app, debug=True,port=5001)
+    start_observer(idm_status.socketio,loop)
+    idm_status.socketio.run(app, debug=True,port=5001)
     loop.run_forever()
     // axios.post('http://localhost:5000/download_file', file_infos)
     // .then(response => console.log(response))
@@ -1054,7 +1054,7 @@ def run(app):
 import asyncio
 import aiofiles
 from flask import Flask, render_template
-from flask_socketio import SocketIO, emit
+from flask_idm_status.socketio import idm_status.socketio, emit
 # from flask_cors import CORS
 from watchdog.observers import Observer
 from watchdog.events import FileSystemEventHandler
@@ -1063,8 +1063,8 @@ import bson
 
 
 class FileChangeHandler(FileSystemEventHandler):
-    def __init__(self, socketio,loop):
-        self.socketio = socketio
+    def __init__(self, idm_status.socketio,loop):
+        self.idm_status.socketio = idm_status.socketio
         self.loop = loop
 
     def on_modified(self, event):
@@ -1078,43 +1078,43 @@ class FileChangeHandler(FileSystemEventHandler):
             print('reading the file')
             bson_data = await state_file.read()
             downloads_state = bson.loads(bson_data)
-            self.socketio.emit('progres', downloads_state)
+            self.idm_status.socketio.emit('progres', downloads_state)
 
    
 
-def start_observer(socketio,loop):
+def start_observer(idm_status.socketio,loop):
     observer = Observer()
-    event_handler = FileChangeHandler(socketio,loop)
+    event_handler = FileChangeHandler(idm_status.socketio,loop)
     observer.schedule(event_handler, path='./', recursive=True)
     observer.start()
 
-    @socketio.on('connect')
+    @idm_status.socketio.on('connect')
     def handle_connect():
-        # start_observer(socketio)
+        # start_observer(idm_status.socketio)
         print('socket backend : Client connected')
 
-    @socketio.on('disconnect')
+    @idm_status.socketio.on('disconnect')
     def handle_disconnect():
         observer.stop()
         observer.join()
         print('socket backend :Client disconnected')
 
-    @socketio.on('progres1')
+    @idm_status.socketio.on('progres1')
     def handle_progres(data):
         print('socket backend :sending you files status ', data)
        
 
-    @socketio.on('message')
+    @idm_status.socketio.on('message')
     def handle_message(msg):
         print('socket backend : Received message ', msg)
-        socketio.emit('message', 'yes am here:sent from backend')
+        idm_status.socketio.emit('message', 'yes am here:sent from backend')
     
    
 def run(app):
-    socketio = SocketIO(app,cors_allowed_origins="*")
+    idm_status.socketio = idm_status.socketio(app,cors_allowed_origins="*")
     loop = asyncio.get_event_loop()
-    start_observer(socketio,loop)
-    socketio.run(app, debug=True,port=5001)
+    start_observer(idm_status.socketio,loop)
+    idm_status.socketio.run(app, debug=True,port=5001)
     loop.run_forever()
 
 
@@ -2647,8 +2647,8 @@ Constant.tsx
 import json
 from threading import Thread
 
-# from socket import SocketIO
-from flask_socketio import SocketIO, emit
+# from socket import idm_status.socketio
+from flask_idm_status.socketio import idm_status.socketio, emit
 import aiohttp
 import asyncio
 import aiofiles
@@ -2672,8 +2672,8 @@ import time
 
 # loop = asyncio.get_event_loop()
 app = Flask(__name__)
-socketio = SocketIO(app,cors_allowed_origins="*")
-# socketio = SocketIO(app)
+idm_status.socketio = idm_status.socketio(app,cors_allowed_origins="*")
+# idm_status.socketio = idm_status.socketio(app)
 
 # CORS(app,resources={r"/*":{"origins":"*"}})
 
@@ -2810,7 +2810,7 @@ async def download_header():
     }
 
     return jsonify(localDownload[file_name])
-    # socketio.emit('filed', localDownload[file_name])
+    # idm_status.socketio.emit('filed', localDownload[file_name])
 
 
 @app.route('/download_file', methods=['POST'])
@@ -2891,7 +2891,7 @@ async def download_file():
                 byte_range += len(data)
                 downloads[file_name]['Downloaded']=byte_range
 
-                socketio.emit('progres', downloads)
+                idm_status.socketio.emit('progres', downloads)
                 print(f'downloading --{byte_range}')
                 print(downloads)
                 task = await asyncio.create_task(write_chunk_to_file(file_save_path,data,file_name,save_state_file,downloaded_size))
@@ -2990,7 +2990,7 @@ def resume_download():
 def handle_my_custom_event():
  loop = asyncio.get_event_loop()
  loop.create_task(async_task())
-#  socketio.start_background_task(async_task)
+#  idm_status.socketio.start_background_task(async_task)
  print('asyncio called1')
  return "asyncio called1"
 
@@ -3001,7 +3001,7 @@ async def async_task():
  return "asyncio completed"
 
 # defining the flask app
-def run_flask_app(socketio):
+def run_flask_app(idm_status.socketio):
     print("FLASK & SOCKETS RUNNING OK ----->")
     # loop = asyncio.new_event_loop()
     # asyncio.set_event_loop(loop)
@@ -3010,30 +3010,30 @@ def run_flask_app(socketio):
     # print("loop----------")
     # print(loop)
 
-    # socketio.run(app, debug=True,port=5001)
+    # idm_status.socketio.run(app, debug=True,port=5001)
     app.run(debug=True, port=5001)
 
 
 if __name__ == '__main__':
     
-    # run_observer(socketio)
-    # Start the Flask-SocketIO server in a separate thread
-    socketio_thread = Thread(target=run_observer(socketio))
-    socketio_thread.start()
+    # run_observer(idm_status.socketio)
+    # Start the Flask-idm_status.socketio server in a separate thread
+    idm_status.socketio_thread = Thread(target=run_observer(idm_status.socketio))
+    idm_status.socketio_thread.start()
 
-    run_flask_app(socketio)
+    run_flask_app(idm_status.socketio)
 
 
-    # run_flask_app(socketio)
+    # run_flask_app(idm_status.socketio)
 
     loop = asyncio.new_event_loop()
     asyncio.set_event_loop(loop)
     
 
     # Run the Flask app and the observer in separate tasks
-    # run_observer(socketio)
-    # loop.run_until_complete(run_observer(socketio))
-    run_observer(socketio)
+    # run_observer(idm_status.socketio)
+    # loop.run_until_complete(run_observer(idm_status.socketio))
+    run_observer(idm_status.socketio)
 
      # Run the event loop to keep the app running
     loop.run_forever()
@@ -3045,7 +3045,7 @@ if __name__ == '__main__':
     
     # app.run(debug=True)
     # asyncio.run(download_file(),debug=True)
-    # socketio.run(app)
+    # idm_status.socketio.run(app)
 
 
 
@@ -3060,26 +3060,26 @@ OBSERVER_SOCKET.PY
     #             file_path = event.src_path
     #             try:
     #                 # print(file_path)
-    #                 # self.socketio.emit('progres', {"dat":'yes progres am here:sent from backend'})
-    #                 # socketio.emit('message', "edited file")
+    #                 # self.idm_status.socketio.emit('progres', {"dat":'yes progres am here:sent from backend'})
+    #                 # idm_status.socketio.emit('message', "edited file")
     #                 async with aiofiles.open(file_path, mode='rb') as state_file:
     #                     print('reading the file')
     #                     bson_data =await state_file.read()
     #                     downloads_state = bson.loads(bson_data)
-    #                     self.socketio.emit('progres', downloads_state)
+    #                     self.idm_status.socketio.emit('progres', downloads_state)
 
                     # with open(file_path, 'rb') as file:
                     #     bson_data = file.read()
                     #     downloads_state = bson.loads(bson_data)
-                    #     self.socketio.emit('progres', downloads_state)
+                    #     self.idm_status.socketio.emit('progres', downloads_state)
                         
     #             # Decode BSON data
     #             except Exception as e:
     #                 print(f"Error reading file or emitting data: {e}")
 
             # with open(file_path, 'rb') as file:
-            #      socketio.emit('message', file.read())
-                #  socketio.emit('file_upload', file.read())
+            #      idm_status.socketio.emit('message', file.read())
+                #  idm_status.socketio.emit('file_upload', file.read())
                 # patch = jsonpatch.make_patch(self.old_state, new_state)
 
 
@@ -3100,21 +3100,21 @@ OBSERVER_SOCKET.PY
 #             # Decode BSON data
 #             downloads_state = bson.loads(bson_data)
 
-# @socketio.on('connect')
+# @idm_status.socketio.on('connect')
 # def on_connect():
-#     start_observer(socketio)
+#     start_observer(idm_status.socketio)
 
-# @socketio.on('disconnect')
+# @idm_status.socketio.on('disconnect')
 # def on_disconnect():
 #     observer.stop()
 #     observer.join()
 
 # if __name__ == '__main__':
-#     # socketio.run(app)
+#     # idm_status.socketio.run(app)
 
 # print("OBSERVER RUNNING OK ----->")
 # observer = Observer()
-# event_handler = FileChangeHandler(socketio,loop)
+# event_handler = FileChangeHandler(idm_status.socketio,loop)
 # observer.schedule(event_handler, path='./', recursive=True)
 # observer.start()
 
@@ -3239,25 +3239,25 @@ App.py
 
 
 
-# run_observer(socketio)
-    # Start the Flask-SocketIO server in a separate thread
-    # run_flask_app(socketio)
+# run_observer(idm_status.socketio)
+    # Start the Flask-idm_status.socketio server in a separate thread
+    # run_flask_app(idm_status.socketio)
     # Run the Flask app and the observer in separate tasks
-    # run_observer(socketio)
-    # loop.run_until_complete(run_observer(socketio))
+    # run_observer(idm_status.socketio)
+    # loop.run_until_complete(run_observer(idm_status.socketio))
     # loop.run_until_complete(download_file())
     # start_observer(app)
     # observer_socket.run(app)
     # app.run(debug=True)
     # asyncio.run(download_file(),debug=True)
-    # socketio.run(app)
+    # idm_status.socketio.run(app)
 
     # loop = asyncio.new_event_loop()
     # asyncio.set_event_loop(loop)
     # loop = asyncio.get_event_loop()
     # print("loop----------")
     # print(loop)
-    # socketio.run(app, debug=True,port=5001)
+    # idm_status.socketio.run(app, debug=True,port=5001)
 
 
 

@@ -19,11 +19,11 @@ async def async_task():
 
 # from observer_socket import start_observer
 # import observer_socket
-# from socket import SocketIO
+# from socket import idm_status.socketio
 # from quart import Quart
 # app = Quart(__name__)
 # loop = asyncio.get_event_loop()
-# socketio = SocketIO(app)
+# idm_status.socketio = idm_status.socketio(app)
 # CORS(app)
 
 
@@ -108,7 +108,7 @@ async def async_task():
 #     }
 
 #     return jsonify(localDownload[file_name])
-#     # socketio.emit('filed', localDownload[file_name])
+#     # idm_status.socketio.emit('filed', localDownload[file_name])
 
 
 

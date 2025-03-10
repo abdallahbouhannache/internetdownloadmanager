@@ -27,21 +27,21 @@ const DownloadWorker = ({ stc, dwAct }) => {
   
   const { CreateReq,NewItem } = useIdmRequests(state => state);
  
-  const downloadFile = async (filedata) => {
-    try {
+  // const downloadFile = async (filedata) => {
+  //   try {
      
-      // console.log("STARTING DOWNLOAD WITH");
-      // console.log({ "SENDING THIS FILE DTAILS TO BACKEND": filedata });
+  //     // console.log("STARTING DOWNLOAD WITH");
+  //     // console.log({ "SENDING THIS FILE DTAILS TO BACKEND": filedata });
 
-      axios
-        .post("http://localhost:5001/download_file", filedata)
-        .then((response) => {
-          // console.log({ "download_file_server_response ended": response });
-        });
-    } catch (error) {
-      console.error(error);
-    }
-  };
+  //     axios
+  //       .post("http://localhost:5001/download_file", filedata)
+  //       .then((response) => {
+  //         // console.log({ "download_file_server_response ended": response });
+  //       });
+  //   } catch (error) {
+  //     console.error(error);
+  //   }
+  // };
   
   const openNewDownload = (uri) => {
     setLink(uri);

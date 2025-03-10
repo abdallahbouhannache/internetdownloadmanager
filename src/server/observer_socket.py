@@ -10,8 +10,8 @@ import bson
 
 from tool import read_status_file 
 
-from Constants import STATUS_DOWNLOAD_FILE ,SAVE_DIR 
-import Constants
+from constants import STATUS_DOWNLOAD_FILE ,SAVE_DIR ,idm_status
+# import constants
 
 # from flask_cors import CORS
 # app = Flask(__name__)
@@ -42,13 +42,16 @@ def start_observer(socketio):
     @socketio.on('connect')
     def handle_connect():
         # start_observer(socketio)
+        # idm_status.status_track=await read_status_file()
+        # emit('load', idm_status.status_track)
+        
         if os.path.exists(SAVE_STATE_FILE):
             with open(SAVE_STATE_FILE, 'rb') as file:
                 bson_data = file.read()                
                 if bson_data:
-                    Constants.status_tracker = bson.loads(bson_data)
+                    idm_status.status_track = bson.loads(bson_data)
 
-                emit('load', Constants.status_tracker)
+                emit('load', idm_status.status_track)
                 # print(f"downloads_state:{downloads_state}")
         print('socket backend : Client connected')
 
@@ -71,21 +74,21 @@ def start_observer(socketio):
     @socketio.on('message')
     def handle_message(msg):
         print('socket backend : Received message ', msg)
-        socketio.emit('message', 'yes am here:sent from backend')
+        idm_status.socketio.emit('message', 'yes am here:sent from backend')
 
 def get_socketio():
-    global Constants
-    return Constants.socketio
+    # global constants
+    return idm_status.socketio
 
-def get_status():
-    status_track=read_status_file()
-    return status_track
+async def get_status():
+    idm_status.status_track=await read_status_file()
+    return idm_status.status_track
 
 def run_observer(app):
-    global Constants
-    Constants.socketio = SocketIO(app,cors_allowed_origins="*",async_mode='threading')
-    start_observer(Constants.socketio)
-    # print("inobserver",Constants.socketio)
+    # global constants
+    idm_status.socketio = SocketIO(app,cors_allowed_origins="*",async_mode='threading')
+    start_observer(idm_status.socketio)
+    # print("inobserver",socketio)
     # socketio = SocketIO(app)
     # socketio = SocketIO(app,cors_allowed_origins="*")
     # socketio.run(app, debug=True,port=5001)

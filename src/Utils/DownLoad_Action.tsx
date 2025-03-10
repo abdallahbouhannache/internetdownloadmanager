@@ -121,7 +121,7 @@ export const IdmReq = () => {
         Url: url,
         Status: true,
         Downloaded: 0,
-        Speed: 120000,
+        Speed: 0,
         Cmd_Option: "new",
         Catg: "UNKNOWN",
         Time_Left: 0,
@@ -154,20 +154,17 @@ export const IdmReq = () => {
       //   newData["FileName"] = url.split("/").pop().trim();
       // }
       // console.log(response1);
-      let {ext,...fileinfos}=response1["data"] 
-      
-      newData = { ...newData,...fileinfos };
+      let { ext, ...fileinfos } = response1["data"];
+
+      newData = { ...newData, ...fileinfos };
       // console.log("newData down |>");
       // console.log(newData);
-      
-      
+
       // let [file_name, ext] = newData["FileName"].split(".") || [
       //   "download",
       //   "html",
       // ];
 
-      
-      
       // const response2 = await axios.get("http://localhost:5001/get_file_name", {
       //   params: {
       //     name: file_name,
@@ -180,7 +177,6 @@ export const IdmReq = () => {
       newData["id"] = uuidv4();
       newData["Catg"] = cat_selector(ext);
 
-      
       CreateReq(newData);
 
       return newData;
@@ -221,9 +217,17 @@ export const IdmReq = () => {
     axios
       .post("http://localhost:5001/resume_download", par)
       .then((response) => {
-        // console.log({ "download_file_server_response ended": response });
-        // refreshDownload();
-        // refreshDownload(downloads);
+        if (response.data.error) {
+          console.error("Resume failed:", response.data.error);
+          // Handle error (e.g., show error message)
+        } else {
+          console.log("Success:", response.data.message);
+          // Handle success (e.g., update UI)
+        }
+      })
+      .catch((err) => {
+        console.error("Request failed:", err);
+        // Handle network/server error
       });
   };
 
@@ -231,13 +235,23 @@ export const IdmReq = () => {
     // let name=par.rows[0]['FileName']
     // downloads[name]['Status']=false
     // refreshDownload(downloads);
-    // console.log(par);
+    console.log("stopping that");
 
-    axios.post("http://localhost:5001/stop_download", par).then((res) => {
-      // if(res.status==200){
-      // }
-      // console.log({ "download_file_server_response ended": res });
-    });
+    axios
+      .post("http://localhost:5001/stop_download", par)
+      .then((res) => {
+        if (res.data.error) {
+          console.error("Stop failed:", res.data.error);
+          // Handle error (e.g., show user message)
+        } else {
+          console.log("Success:", res.data.message);
+          // Handle success (e.g., update UI)
+        }
+      })
+      .catch((err) => {
+        console.error("Request failed:", err);
+        // Handle network/server error
+      });
   };
 
   const DelItems = async (par) => {

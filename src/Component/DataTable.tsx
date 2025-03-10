@@ -24,7 +24,7 @@ const DataTable = ({ dataTable }) => {
       id: row.id || "",
       FileName: row.FileName || "",
     };
-    
+
     setprogresID(data);
     displayProgress(!progressON);
 
@@ -46,16 +46,24 @@ const DataTable = ({ dataTable }) => {
   //     Resume: false,
   //   },
   // ];
+// Define a common style for all columns
+  const columnStyle = {
+    maxWidth: "20rem",
+    whiteSpace: "nowrap",
+    overflow: "hidden",
+    textOverflow: "ellipsis",
+    fontSize: "14px",
+  };
 
   const columns = [
-    { dataField: "FileName", text: "FileName", sort: true },
-    { dataField: "Status", text: "Status", sort: true },
-    { dataField: "Finished", text: "Finished", sort: true },
-    { dataField: "Time_Left", text: "Time_Left", sort: true },
+    { dataField: "FileName", text: "FileName", sort: true, style: columnStyle },
+    { dataField: "Status", text: "Status", sort: true, style: columnStyle },
+    { dataField: "Finished", text: "Finished", sort: true, style: columnStyle },
+    { dataField: "Time_Left", text: "Time_Left", sort: true, style: columnStyle },
     {
       dataField: "Speed",
       text: "Speed",
-      sort: true,
+      sort: true, style: columnStyle,
       formatter: (cellContent, row, rowIndex, formatExtraData) => {
         return formatFileSize(cellContent);
       },
@@ -63,23 +71,27 @@ const DataTable = ({ dataTable }) => {
     {
       dataField: "Downloaded",
       text: "Downloaded",
-      sort: true,
+      sort: true, style: columnStyle,
       formatter: (cellContent, row, rowIndex, formatExtraData) => {
         return formatFileSize(cellContent);
       },
     },
-    { dataField: "SavePath", text: "SavePath", sort: true },
+    { dataField: "SavePath", text: "SavePath", sort: true, style: columnStyle },
     {
       dataField: "File_Size",
       text: "File_Size",
-      sort: true,
+      sort: true, style: columnStyle,
       formatter: (cellContent, row, rowIndex, formatExtraData) => {
         return formatFileSize(cellContent);
       },
     },
-    { dataField: "Url", text: "Url", sort: true },
-    { dataField: "Catg", text: "Catg", sort: true },
-    { dataField: "Resume", text: "Resume", sort: true },
+    {
+      dataField: "Url",
+      text: "Url",
+      sort: true, style: columnStyle
+    },
+    { dataField: "Catg", text: "Catg", sort: true, style: columnStyle },
+    { dataField: "Resume", text: "Resume", sort: true, style: columnStyle },
   ];
 
   const filteredData = dataTable.filter(
@@ -90,14 +102,14 @@ const DataTable = ({ dataTable }) => {
 
   // const [showProgress, setshowProgress] = useState(false);
 
-  var DownloadContent = {
-    Status: "Get",
-    File_Size: "10mb",
-    Speed: "145kb",
-    Downloaded: "5.78mb",
-    Time_Left: "1min 25sec",
-    Resume: "True",
-  };
+  // var DownloadContent = {
+  //   Status: "Get",
+  //   File_Size: "10mb",
+  //   Speed: "145kb",
+  //   Downloaded: "5.78mb",
+  //   Time_Left: "1min 25sec",
+  //   Resume: "True",
+  // };
   // const [nwDownload, setNewDownload] = useState(DownloadContent);
 
   const [selectedRowID, setSelectedRowID] = useState(null);
@@ -174,12 +186,13 @@ const DataTable = ({ dataTable }) => {
         className="table-container"
       >
         <BootstrapTable
-          rowStyle={rowCssStyle}
           keyField="id"
+          rowStyle={rowCssStyle}
           data={filteredData}
           columns={columns}
           rowEvents={rowEvents}
           hover
+          
         />
       </div>
     </>
