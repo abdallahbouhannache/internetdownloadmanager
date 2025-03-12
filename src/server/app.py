@@ -5,10 +5,13 @@ from flask import Flask
 from flask_cors import CORS
 from observer_socket import run_observer ,get_status
 from api import api_blueprint  # Import the blueprint
+from socketio import AsyncServer
 # import constants
 from constants import idm_status
-from tool import read_status_file
+# from tool import read_status_file
 import time
+
+
 
 # import pdb  debugger
 
@@ -18,8 +21,16 @@ app = Flask(__name__)
 app.register_blueprint(api_blueprint)  # Register the blueprint
 CORS(app,resources={r"/*":{"origins":"*"}})
 
-async def funf():
-    idm_status.status_track=await read_status_file()
+
+# Use AsyncServer for asyncio compatibility
+# idm_status.socketio = AsyncServer(cors_allowed_origins="*")
+
+
+
+# idm_status.socketio.attach(app)
+
+# async def funf():
+#     idm_status.status_track=await read_status_file()
 
 # defining the flask app
 async def run_flask_app():

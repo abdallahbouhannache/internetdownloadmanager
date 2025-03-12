@@ -20,8 +20,6 @@ import { v4 as uuidv4 } from "uuid";
 import { IdmReq } from "../Utils/DownLoad_Action";
 import { useIdmRequests } from "../zustand/useAppState";
 
-
-
 function New_Download({
   theUrl,
   show,
@@ -37,6 +35,7 @@ function New_Download({
     id: "",
     Url: "",
     Status: true,
+    Finished: false,
     Downloaded: 0,
     Speed: 0,
     Cmd_Option: "new",
@@ -70,6 +69,13 @@ function New_Download({
     }
   }, [theUrl, NewItem]);
 
+  useEffect(() => {
+    console.log(LocalData);
+    setLocalData({ ...LocalData});
+
+  }, [show])
+  
+
   const handleSavePath = async (v) => {
     // console.log(`path set ${v}`);
     // data["SavePath"]=v;
@@ -78,7 +84,6 @@ function New_Download({
     // console.log("handleSavePath");
     try {
       const dirHandle = await window.showDirectoryPicker();
-      
       setLocalData({ ...LocalData, SavePath: dirHandle.name });
       // document.getElementById('fileOpener').value = dirHandle.name; // Display directory name
     } catch (err) {
@@ -210,9 +215,11 @@ function New_Download({
             />
           </Form.Group>
           <Col xs={"auto"} className="text-center">
+
+            {/* LocalData.Catg */}
             <Image width="55" src={fileIcon} alt="Image 1" />
             <div className="pt-3 pb-1">{LocalData.FileName} </div>
-            <div>{LocalData.File_Size} </div>
+            <div>{ LocalData.File_Size > 0 && LocalData.File_Size  } </div>
           </Col>
         </Row>
         <Row className="pb-4 justify-content-end">

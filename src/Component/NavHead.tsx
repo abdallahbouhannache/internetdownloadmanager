@@ -11,6 +11,7 @@ import Add from "../assets/add-file.png";
 import Stop from "../assets/stop (1).png";
 import Recyle from "../assets/waste.png";
 import axios from "axios";
+import swal from "sweetalert";
 import {
   useIdmRequests,
   useProgresID,
@@ -18,6 +19,7 @@ import {
 } from "../zustand/useAppState";
 import { IdmReq } from "../Utils/DownLoad_Action";
 import { useStore } from "zustand";
+
 
 const style = {
   btn: {
@@ -91,35 +93,47 @@ function NavHead() {
     // console.log("open download");
   };
 
-  const handleContinueClick = () => {
+  const handleContinueClick = async () => {
     const par = {};
     par["rows"] = [CurrentRow];
     if (CurrentRow) {
-      // console.log(CurrentRow);
-      par["rows"].length == 1 && displayProgress(!progressON);
       let data = {
-        id: par["rows"][0].id ||  "",
-        FileName:par["rows"][0].FileName ||  "",
+        id: par["rows"][0].id || "",
+        FileName: par["rows"][0].FileName || "",
       };
-      setprogresID(data);
-      // console.log(data);
-      // console.log(progresID);
-      // console.log({par});
+
+      // par["rows"][0]["Cmd_Option"] = "continue";
+      par["rows"][0]["Cmd_Option"] = "restart";
+
       
-      idmR.ContinueItems(par)
+      if (par["rows"][0]["finished"]) {
+        const restart = await swal({
+          title: "You wanna Restart?",
+          text: "If yes old file will be deleted!",
+          icon: "warning",
+          buttons: ["No", "Yes"],
+          dangerMode: true,
+        });
+        if (!restart) return;
+        par["rows"][0]["Cmd_Option"] = "restart";
+      }
+
+
+      par["rows"].length == 1 && displayProgress(!progressON);
+      setprogresID(data);
+      idmR.ContinueItems(par);
     }
-    // console.log("continue clicked");
   };
 
+  // console.log(CurrentRow);
   const handleStopClick = () => {
-    // console.log(CurrentRow);
     const par = {};
     par["rows"] = [CurrentRow];
     if (CurrentRow) {
       idmR.StopItems(par);
     }
-    // console.log("stop clicked");
   };
+  // console.log("stop clicked");
 
   const handleRemoveItems = () => {
     const par = {};
@@ -127,8 +141,8 @@ function NavHead() {
     if (CurrentRow) {
       idmR.DelItems(par);
     }
-    // console.log("selected item has been removed");
   };
+  // console.log("selected item has been removed");
 
   const handleDelAll = () => {
     const par = {};

@@ -117,7 +117,6 @@ const DataTable = ({ dataTable }) => {
 
   const rowEvents = {
     onDoubleClick: handleRowDoubleClick,
-
     onClick: (e, row, rowIndex) => {
       e.stopPropagation();
       let item = {
@@ -142,19 +141,22 @@ const DataTable = ({ dataTable }) => {
       // e.currentTarget.style.backgroundColor = "red";
     },
   };
-
   // .bootstrap-table .table-hover tbody tr:hover
   // e.currentTarget.style.backgroundColor = "red";
 
   const rowCssStyle = (_, ind) => {
     if (ind === selectedRowID) {
       return {
-        // border: "solid 2px black",
-        // color: "purple",
-        // "--bs-table-bg":"#b4844d85",
-        "--bs-table-color": "#ffffff",
+        backgroundColor: "#6b3a00e8",
         "--bs-table-bg": "#6b3a00e8",
-      };
+        "--bs-table-color": "#ffffff",
+      }
+    }else{
+      return {
+        backgroundColor: "#ffffff",
+        "--bs-table-bg": "#ffffff",
+        "--bs-table-color": "#000000",
+      }
     }
   };
 
@@ -184,6 +186,7 @@ const DataTable = ({ dataTable }) => {
           setSelectedRowID(null);
         }}
         className="table-container"
+        
       >
         <BootstrapTable
           keyField="id"
@@ -192,7 +195,8 @@ const DataTable = ({ dataTable }) => {
           columns={columns}
           rowEvents={rowEvents}
           hover
-          
+          condensed
+          // striped
         />
       </div>
     </>

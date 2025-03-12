@@ -26,6 +26,7 @@ const DownloadWorker = ({ stc, dwAct }) => {
   const idmR = IdmReq();
   
   const { CreateReq,NewItem } = useIdmRequests(state => state);
+  
  
   // const downloadFile = async (filedata) => {
   //   try {
@@ -47,7 +48,6 @@ const DownloadWorker = ({ stc, dwAct }) => {
     setLink(uri);
     displayNewDownload(!newDownloadON);
     idmR.InitItem(uri);
-    
   };
   const handleAddUrlClose = () => {
     displayAddUrl(false);
@@ -62,10 +62,8 @@ const DownloadWorker = ({ stc, dwAct }) => {
   };
 
   const DownloadLater = (data) => {
-    
     idmR.StartItem(data);
     displayNewDownload(false);
- 
   };
 
   const startProgress = (data) => {

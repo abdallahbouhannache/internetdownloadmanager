@@ -11,6 +11,8 @@ import re
 import os
 import urllib.parse
 
+from tool import verify
+
 
 api_blueprint = Blueprint('api', __name__)
 
@@ -52,11 +54,18 @@ def get_file_name():
     # print(file_count)
 
 @api_blueprint.route('/download_file', methods=['POST'])
-async def download_file_api():
+async def download_file_endpoint():
     file_infos = request.get_json()
-    file_name = file_infos.get('name') or 'dowload_file'
-    await download_file(file_infos)
-    return f"File {file_name} Download finish"
+    # verify(file_infos)
+    # await download_file(file_infos)
+    # return f"File  Download finish"
+    try:
+        verify(file_infos)  # Added verification
+        await download_file(file_infos)
+        return "File Download finish"
+    except ValueError as e:
+        return str(e), 400
+    # file_name = file_infos.get('name') or 'dowload_file'
 
 @api_blueprint.route('/stop_download', methods=['POST'])
 async def stop_download():
@@ -116,7 +125,7 @@ async def resume_download():
         status = 200
     else:
         items = data.get('rows', [])
-        file_names=[item['FileName'] for item in items if 'FileName' in item]
+        file_names=[(item['FileName'],item['Cmd_Option']) for item in items if 'FileName' in item]
         res=f"the selected files are resumed"
         status = 200 if file_names else 400
         print("filename_resume",file_names)

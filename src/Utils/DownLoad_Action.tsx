@@ -32,8 +32,8 @@ export function Dowload_Actions() {
     });
 
     socket.current.on("progres", (refreshData) => {
-      // console.log(refreshData);
-      // console.log("progres refresh");
+      console.log(refreshData);
+      console.log("progres refresh");
       refreshDownload(refreshData);
     });
 
@@ -176,7 +176,7 @@ export const IdmReq = () => {
 
       newData["id"] = uuidv4();
       newData["Catg"] = cat_selector(ext);
-
+      console.log(newData);
       CreateReq(newData);
 
       return newData;
@@ -203,17 +203,25 @@ export const IdmReq = () => {
 
     addDownload(newFileD);
     axios.post("http://localhost:5001/download_file", data).then((response) => {
-      // console.log({ "download_file_server_response ended": response });
+      console.log(response);
     });
+    // .then((response) => {
+    //   if (response.data.error) {
+    //     console.error("starting failed:", response.data.error);
+    //     // Handle error (e.g., show error message)
+    //   } else {
+    //     console.log("Success:", response.data.message);
+    //     // Handle success (e.g., update UI)
+    //   }
+    // })
+    // .catch((err) => {
+    //   console.error("Request failed:", err);
+    //   // Handle network/server error
+    // });
   };
 
   const ContinueItems = async (par) => {
-    // console.log({ par });
-    // console.log(par.rows[0]["FileName"]);
-    // let name=par.rows[0]['FileName']
-    // downloads[name]['Status']=true
-    // let thedownload = {...downloads};
-    // console.log("downloads",downloads[name]);
+    
     axios
       .post("http://localhost:5001/resume_download", par)
       .then((response) => {

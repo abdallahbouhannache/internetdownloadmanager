@@ -1,5 +1,5 @@
 
-from constants import STATUS_DOWNLOAD_FILE ,SAVE_DIR ,idm_status
+from constants import STATUS_DOWNLOAD_FILE ,SAVE_DIR ,idm_status,SAVE_STATE_FILE
 # import constants
 import time
 import asyncio
@@ -10,12 +10,13 @@ import aiofiles
 
 async def get_bandwith_speed(session, file_name,url, init_test_size=1024*1024,interval=0.2):  # Test size 1MB
 
-    idm_status.status_track=await read_status_file()
+    # await read_status_file()
     headers = {'Range': f'bytes=0-{init_test_size-1}'}
     receivedData=0
     rounded_speed=0
-    
+
     while idm_status.status_track[file_name]['Status']:
+        
         if abs(rounded_speed) > 300000:
             interval = min(interval + 0.1, 2.0)
         else:
@@ -52,6 +53,7 @@ async def get_bandwith_speed(session, file_name,url, init_test_size=1024*1024,in
             rounded_speed = round(speed_in_bytes_per_second)
             idm_status.status_track[file_name]['Speed']=rounded_speed
             # return rounded_speed
+    print("finished bandwidth")
 
 
 def check_internet_connection(url):
@@ -75,11 +77,11 @@ async def retry_internet_check(url, max_retries=5, delay=1):
 
 async def read_status_file():
     print("reading status file")
-
     # idm_status.status_track={}
-    save_state_file = os.path.join(SAVE_DIR,STATUS_DOWNLOAD_FILE)
+    # if os.path.exists(save_state_file):
 
     async with idm_status.status_lock:
+        save_state_file = os.path.join(SAVE_DIR,STATUS_DOWNLOAD_FILE)
         try:
             async with aiofiles.open(save_state_file, mode='rb') as state_file:
                 bson_data = await state_file.read()
@@ -87,47 +89,79 @@ async def read_status_file():
                     idm_status.status_track = bson.loads(bson_data)
                     # print("inside readstatus-----")
                     # print(idm_status.status_track)
-                # return idm_status.status_track    
+                # return idm_status.status_track
         except FileNotFoundError:
+            print("error reading file")
             # Create an empty file if it doesn't exist
             # initial_status = {}
-            await write_status_file(idm_status.status_track)
+            # await write_status_file(idm_status.status_track)
             # return idm_status.status_track
-        return idm_status.status_track
-
+        # return idm_status.status_track
 
 async   def  write_status_file(new_status):
     print("writting status file")
     async with idm_status.status_lock: 
-        save_state_file = os.path.join(SAVE_DIR,STATUS_DOWNLOAD_FILE)
-        async with aiofiles.open(save_state_file, 'wb') as state_file:
+        # save_state_file = os.path.join(SAVE_DIR,STATUS_DOWNLOAD_FILE)
+        async with aiofiles.open(SAVE_STATE_FILE, 'wb') as state_file:
             bson_data = bson.dumps(new_status)
             await state_file.write(bson_data)
-
     # with open(save_state_file, mode='wb') as state_file:
     #     bson_data = bson.dumps(new_status)
     #     state_file.write(bson_data)
 
+async def write_chunk_to_file(tmp_path,file_path,File_Bytes,file_name,pos_start,total_size):
+    if len(File_Bytes):
+        # print("writting chunks to downloaded file")
+        # print(f"chunk length {len(File_Bytes)}")
+        async with idm_status.file_lock: 
+            if idm_status.status_track[file_name]:
+                if not os.path.exists(tmp_path):
+                    async with aiofiles.open(tmp_path, "wb") as f:
+                        await f.write(b"")
 
-async def write_chunk_to_file(file_path,File_Bytes,file_name,save_state_file):
-    # print(downloads[file_name],"from writing to chunk")
-    print("writting chunks to downloaded file")
-    print(idm_status.status_track)
-    async with idm_status.file_lock: 
-        if idm_status.status_track[file_name]:
-            # print(f'appending {get_file_size(len(File_Bytes))}')
-            with open(file_path, 'ab') as file:
-                file.write(File_Bytes)
-            # print("keeping track of file")
-            async with aiofiles.open(save_state_file, 'wb') as state_file:
-                bson_data = bson.dumps(idm_status.status_track)
-                await state_file.write(bson_data)
+                async with aiofiles.open(tmp_path, "r+b") as f:
+                    await f.seek(pos_start)
+                    await f.write(File_Bytes)
+
+                
+                # Rename to final_path when size matches
+                if os.path.getsize(tmp_path) >= total_size:  # Check size
+                    os.rename(tmp_path, file_path)  # Rename happens here
+
+                await write_status_file(idm_status.status_track)
+
+                # print("keeping track of file")
+                # async with aiofiles.open(SAVE_STATE_FILE, 'wb') as state_file:
+                #     bson_data = bson.dumps(idm_status.status_track)
+                #     await state_file.write(bson_data)
                 # print("end writing")
         # else:
             # idm_status.status_track[file_name]
             # pass
             # here i do the creation of entry in the save_state_file to keep progress status
             # for persever progress data of downloads 
+
+
+
+
+def verify(file_infos):
+    if not isinstance(file_infos, dict):
+        raise ValueError("file_infos must be a dictionary")
+    if not file_infos:
+        raise ValueError("file_infos cannot be empty")
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 # def get_file_size(content_length):
@@ -149,4 +183,6 @@ async def write_chunk_to_file(file_path,File_Bytes,file_name,save_state_file):
 
 #     # If the size is larger than the last unit, return in GB
 #     return f"{size:.2f} GB"
+
+
 

@@ -33,6 +33,7 @@ function Download_Progress({ dwAct, handleClose, show }) {
     // id: "",
     Url: "",
     Status: false,
+    Finished: false,
     Downloaded: 0,
     Speed: 256,
     Cmd_Option: "new",
@@ -224,7 +225,8 @@ function Download_Progress({ dwAct, handleClose, show }) {
             Cancel
           </Button>
           <Button onClick={handleStopContinue} variant="outline-dark">
-            {downloadProgress["Status"] ? "Pause" : "Continue"}
+            {/* {downloadProgress["Status"] ? "Pause" : "Continue"} */}
+            {downloadProgress.Finished ? "Restart" : downloadProgress.Status ? "Pause" : "Continue"}
           </Button>
           <Button onClick={handleToggle} variant="outline-secondary">
             {showContent ? "Hide" : "Show"}

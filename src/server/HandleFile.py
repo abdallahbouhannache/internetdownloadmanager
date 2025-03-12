@@ -26,7 +26,7 @@ async def stop_files(file_names=None,all=None):
     idm_status.socketio=get_socketio()
     # print("idm_status.socketio",idm_status.socketio)
     # print("status_tracke before",idm_status.status_track)
-    idm_status.status_track=await read_status_file()
+    await read_status_file()
     # print("idm_status.status_track",idm_status.status_track)
     
 
@@ -46,36 +46,85 @@ async def stop_files(file_names=None,all=None):
     await write_status_file(idm_status.status_track)
 
 async def resume_files(file_names=None,all=None):
+
+    # print("resuming files working")
+    # print(file_names)
+    # print(idm_status.status_track.get('Free_Test_Data_15MB_MP4(2).mp4'))
+    # print(type(idm_status.status_track))
+    # return False
+    # items = [(file_name, idm_status.status_track[file_name]) for file_name in idm_status.status_track.keys()]
     idm_status.socketio=get_socketio()
-    idm_status.status_track=await read_status_file()
+    await read_status_file()
 
-    if all:
-        file_names = list(idm_status.status_track.keys())
+    # Prepare items based on 'all' condition
+    items = (
+        [(file_name, "restart" if idm_status.status_track[file_name].get('Finished', False) else "continue")
+         for file_name in idm_status.status_track.keys()] if all
+        else file_names or []  # Default to empty list if file_names is None
+    )
 
-    for file_name in file_names:
-        # Item=idm_status.status_track[file_name]['Status'] or False
-        Item = idm_status.status_track.get(file_name, {}).get('Status', False)
-        if not Item:
+
+    for file_name, action in items:
+        item_downloading = idm_status.status_track.get('Status', False)
+        
+        if not item_downloading:
             print("resuming")
-            idm_status.status_track[file_name]['Status'] = True
+            # finished = idm_status.status_track.get('Finished', False)
+            down_size = idm_status.status_track.get('Downloaded', 0)
+            filesize = idm_status.status_track.get('File_Size', 0)
+            
+            idm_status.status_track[file_name].update({
+                'Status': True,
+                'Finished': False,
+                'Downloaded': 0 if filesize==down_size else down_size,
+                'Cmd_Option': action
+            })
+            
             file_infos = idm_status.status_track[file_name]
-            # idm_status.socketio.emit('progres', idm_status.status_track)
-            idm_status.socketio.emit('progress', {file_name: file_infos})
+            idm_status.socketio.emit('progres', idm_status.status_track)
             await download_file(file_infos)
 
-            # downloads[file_name]['Status']=True
-            # asyncio.create_task(download_file(file_info))
-            # asyncio.run(download_file(file_info))
-            # lop = asyncio.get_event_loop()
-            # lop.create_task(download_file(file_info))
-
-    time.sleep(0.05)
     await write_status_file(idm_status.status_track)
+
+    # if all:
+    #     file_names = list(idm_status.status_track.keys())
+    #     for file_name in file_names:
+    #         Item_Downloading = idm_status.status_track[file_name].get('Status', False)
+    #         if not Item_Downloading:
+    #             print("resuming")                
+    #             finished = idm_status.status_track.get(file_name, {}).get('Finished', False)
+    #             down_size = idm_status.status_track.get(file_name, {}).get('Downloaded', 0)
+    #             idm_status.status_track[file_name].update({
+    #                 'Status': True,
+    #                 'Finished': False,
+    #                 'Downloaded':0 if finished else down_size,
+    #                 'Cmd_Option':  "restart" if finished else "continue"
+    #             })
+    #             file_infos = idm_status.status_track[file_name]
+    #             idm_status.socketio.emit('progres', idm_status.status_track)
+    #             await download_file(file_infos)
+    # else:
+    #     for file_name,action in file_names:
+    #         Item_Downloading = idm_status.status_track.get(file_name, {}).get('Status', False)
+    #         print("Item_Downloading",Item_Downloading)
+    #         if not Item_Downloading:
+    #             print("resuming")
+    #             idm_status.status_track[file_name].update({
+    #                 'Status': True,
+    #                 'Finished': False,
+    #                 'Downloaded':0,
+    #                 'Cmd_Option': action
+    #             })
+    #             file_infos = idm_status.status_track[file_name]
+    #             idm_status.socketio.emit('progres', idm_status.status_track)
+    #             await download_file(file_infos)
+            
+    # await write_status_file(idm_status.status_track)
 
 
 async def delete_files(file_names=[],all=None):
     idm_status.socketio=get_socketio()
-    idm_status.status_track=await read_status_file()
+    await read_status_file()
 
     if all:
         file_names = list(idm_status.status_track.keys())

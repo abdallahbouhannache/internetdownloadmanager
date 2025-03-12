@@ -18,6 +18,7 @@ from constants import STATUS_DOWNLOAD_FILE ,SAVE_DIR ,idm_status
 # app.config['SECRET_KEY'] = 'your-secret-key'
 # CORS(app,resources={r"/*":{"origins":"*"}})
 
+
 SAVE_STATE_FILE = os.path.join(SAVE_DIR, STATUS_DOWNLOAD_FILE)
 
 # class FileChangeHandler(FileSystemEventHandler):
@@ -50,9 +51,9 @@ def start_observer(socketio):
                 bson_data = file.read()                
                 if bson_data:
                     idm_status.status_track = bson.loads(bson_data)
-
                 emit('load', idm_status.status_track)
                 # print(f"downloads_state:{downloads_state}")
+                idm_status.socketio.emit('load', idm_status.status_track)
         print('socket backend : Client connected')
 
     @socketio.on('disconnect')
@@ -81,13 +82,19 @@ def get_socketio():
     return idm_status.socketio
 
 async def get_status():
-    idm_status.status_track=await read_status_file()
+    await read_status_file()
     return idm_status.status_track
 
 def run_observer(app):
     # global constants
-    idm_status.socketio = SocketIO(app,cors_allowed_origins="*",async_mode='threading')
+    # idm_status.socketio = SocketIO(app,cors_allowed_origins="*",async_mode='threading')
+    idm_status.socketio = SocketIO(app,cors_allowed_origins="*",async_handlers=True)
+    # idm_status.socketio = SocketIO(app,cors_allowed_origins="*",async_handlers=True,async_mode='gevent')
+
     start_observer(idm_status.socketio)
+
+
+    
     # print("inobserver",socketio)
     # socketio = SocketIO(app)
     # socketio = SocketIO(app,cors_allowed_origins="*")
