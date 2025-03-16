@@ -1,16 +1,21 @@
-import asyncio
+
 import os
 import aiofiles
 from flask import Flask, render_template
 from flask_socketio import SocketIO, emit
-from watchdog.observers import Observer
-from watchdog.events import FileSystemEventHandler
+# from watchdog.observers import Observer
+# from watchdog.events import FileSystemEventHandler
 import jsonpatch
 import bson
 
-from tool import read_status_file 
+from tool import read_status_file ,process_status_updates
 
-from constants import STATUS_DOWNLOAD_FILE ,SAVE_DIR ,idm_status
+from constants import STATUS_DOWNLOAD_FILE ,SAVE_DIR ,idm_status,SAVE_STATE_FILE
+
+import asyncio
+
+import socketio
+
 # import constants
 
 # from flask_cors import CORS
@@ -19,7 +24,10 @@ from constants import STATUS_DOWNLOAD_FILE ,SAVE_DIR ,idm_status
 # CORS(app,resources={r"/*":{"origins":"*"}})
 
 
-SAVE_STATE_FILE = os.path.join(SAVE_DIR, STATUS_DOWNLOAD_FILE)
+# SAVE_STATE_FILE = os.path.join(SAVE_DIR, STATUS_DOWNLOAD_FILE)
+
+
+
 
 # class FileChangeHandler(FileSystemEventHandler):
 #     def __init__(self, socketio,loop):
@@ -39,25 +47,38 @@ SAVE_STATE_FILE = os.path.join(SAVE_DIR, STATUS_DOWNLOAD_FILE)
 #             downloads_state = bson.loads(bson_data)
 #             self.socketio.emit('progres', downloads_state)
 
+
+# start_observer(socketio)
+# idm_status.status_track=await read_status_file()
+# emit('load', idm_status.status_track)
+ # if os.path.exists(SAVE_STATE_FILE):
+        #     with open(SAVE_STATE_FILE, 'rb') as file:
+        #         bson_data = file.read()                
+        #         if bson_data:
+        #             idm_status.status_track = bson.loads(bson_data)
+        #         # emit('load', idm_status.status_track)
+
+                # idm_status.socketio.emit('load', idm_status.status_track)
+
+                # print(f"downloads_state:{downloads_state}")
+
 def start_observer(socketio):
     @socketio.on('connect')
-    def handle_connect():
-        # start_observer(socketio)
-        # idm_status.status_track=await read_status_file()
-        # emit('load', idm_status.status_track)
+    async def handle_connect(sid, environ):
+
+        if not idm_status._status_file_loaded:
+            idm_status._status_file_loaded=True
+            await read_status_file()
+
         
-        if os.path.exists(SAVE_STATE_FILE):
-            with open(SAVE_STATE_FILE, 'rb') as file:
-                bson_data = file.read()                
-                if bson_data:
-                    idm_status.status_track = bson.loads(bson_data)
-                emit('load', idm_status.status_track)
-                # print(f"downloads_state:{downloads_state}")
-                idm_status.socketio.emit('load', idm_status.status_track)
+
+        await socketio.emit('load', idm_status.status_track, room=sid)
+
+       
         print('socket backend : Client connected')
 
     @socketio.on('disconnect')
-    def handle_disconnect():
+    async def handle_disconnect(sid):
         # observer.stop()
         # observer.join()
         print('socket backend :Client disconnected')
@@ -73,9 +94,9 @@ def start_observer(socketio):
         # socketio.emit('progres', {"dat":'yes progres am here:sent from backend'})
 
     @socketio.on('message')
-    def handle_message(msg):
+    async def handle_message(msg):
         print('socket backend : Received message ', msg)
-        idm_status.socketio.emit('message', 'yes am here:sent from backend')
+        await  socketio.emit('message', 'yes am here:sent from backend')
 
 def get_socketio():
     # global constants
@@ -85,14 +106,40 @@ async def get_status():
     await read_status_file()
     return idm_status.status_track
 
-def run_observer(app):
-    # global constants
-    # idm_status.socketio = SocketIO(app,cors_allowed_origins="*",async_mode='threading')
-    idm_status.socketio = SocketIO(app,cors_allowed_origins="*",async_handlers=True)
-    # idm_status.socketio = SocketIO(app,cors_allowed_origins="*",async_handlers=True,async_mode='gevent')
 
+async def start_background_tasks(app):
+    """Starts process_status_updates when the app starts."""
+    print("✅ Starting background tasks...")  # Debugging
+    app["status_task"] = asyncio.create_task(process_status_updates())
+    print(f"✅ Background task created: {app['status_task']}")
+
+
+async def cleanup_background_tasks(app):
+    """Cancels the background task on app shutdown."""
+    app["status_task"].cancel()
+    await app["status_task"]
+
+def run_observer(app):
+    idm_status.socketio = socketio.AsyncServer(cors_allowed_origins="*")
+    idm_status.socketio.attach(app)
     start_observer(idm_status.socketio)
 
+    # Start background task when the app starts
+    app.on_startup.append(start_background_tasks)
+    app.on_cleanup.append(cleanup_background_tasks)
+
+
+    # idm_status.socketio = SocketIO(app,cors_allowed_origins="*",async_mode='threading')
+
+    # idm_status.socketio = SocketIO(app,cors_allowed_origins="*",async_handlers=True)
+
+    # idm_status.socketio = SocketIO(app,cors_allowed_origins="*", async_mode='eventlet')
+    # idm_status.socketio = SocketIO(app,cors_allowed_origins="*",async_handlers=True,async_mode='gevent')
+
+    # idm_status.socketio = SocketIO(app,cors_allowed_origins="*")
+
+    # Initialize SocketIO server
+    
 
     
     # print("inobserver",socketio)

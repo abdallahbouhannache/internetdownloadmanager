@@ -21,29 +21,27 @@ from tool import read_status_file , write_status_file
 #     return 'downloaded_file.html'
 
 async def stop_files(file_names=None,all=None):
-    # global downloads
-    # idm_status.status_track=get_status()
-    idm_status.socketio=get_socketio()
-    # print("idm_status.socketio",idm_status.socketio)
-    # print("status_tracke before",idm_status.status_track)
-    await read_status_file()
-    # print("idm_status.status_track",idm_status.status_track)
+    if not idm_status.socketio:
+        idm_status.socketio=get_socketio()   
+
     
+    # await read_status_file()
 
     if all:
         file_names = list(idm_status.status_track.keys())
 
-    for file_name in file_names:
-        idm_status.status_track[file_name]['Status'] = False
-        idm_status.socketio.emit('progres', idm_status.status_track)
-        # downloads[file_name]['Status']=False
-        # Item=idm_status.status_track[file_name]['Status'] or True
-        print("stopped filed")
-        # if Item:
-        #     idm_status.status_track[file_name]['Status'] = False
-
-    time.sleep(0.05)
-    await write_status_file(idm_status.status_track)
+    try:
+        async with asyncio.timeout(5):  # Timeout in 5 seconds   
+            async with idm_status.status_lock:
+                for file_name in file_names:
+                    idm_status.status_track[file_name]['Status'] = False
+                    print("😀send a stop signal to queue")
+                    print("🛑stopped filed")
+            await idm_status.status_queue.put((None, None))
+        return True
+    except asyncio.TimeoutError:
+        print(" Possible deadlock. IN STOP_FILES ⁉️")
+        return False
 
 async def resume_files(file_names=None,all=None):
 
@@ -53,9 +51,12 @@ async def resume_files(file_names=None,all=None):
     # print(type(idm_status.status_track))
     # return False
     # items = [(file_name, idm_status.status_track[file_name]) for file_name in idm_status.status_track.keys()]
-    idm_status.socketio=get_socketio()
+    if not idm_status.socketio:
+        idm_status.socketio=get_socketio()
+
     await read_status_file()
 
+    
     # Prepare items based on 'all' condition
     items = (
         [(file_name, "restart" if idm_status.status_track[file_name].get('Finished', False) else "continue")
@@ -63,25 +64,29 @@ async def resume_files(file_names=None,all=None):
         else file_names or []  # Default to empty list if file_names is None
     )
 
-
-    for file_name, action in items:
-        item_downloading = idm_status.status_track.get('Status', False)
+    for file_name, action in items: 
+        item_downloading = idm_status.status_track.get(file_name, {}).get('Status', False)
+        down_size = idm_status.status_track.get(file_name, {}).get('Downloaded', 0)
+        filesize = idm_status.status_track.get(file_name, {}).get('File_Size', 0)
+    
         
         if not item_downloading:
             print("resuming")
             # finished = idm_status.status_track.get('Finished', False)
-            down_size = idm_status.status_track.get('Downloaded', 0)
-            filesize = idm_status.status_track.get('File_Size', 0)
+            down_size = idm_status.status_track.get(file_name, {}).get('Downloaded', 0)
+            filesize = idm_status.status_track.get(file_name, {}).get('File_Size', 0)
             
             idm_status.status_track[file_name].update({
                 'Status': True,
                 'Finished': False,
-                'Downloaded': 0 if filesize==down_size else down_size,
+                'Downloaded': 0 if down_size>=filesize  else down_size,
                 'Cmd_Option': action
             })
             
             file_infos = idm_status.status_track[file_name]
-            idm_status.socketio.emit('progres', idm_status.status_track)
+
+            # await idm_status.socketio.emit('progres', idm_status.status_track)
+
             await download_file(file_infos)
 
     await write_status_file(idm_status.status_track)
@@ -143,6 +148,6 @@ async def delete_files(file_names=[],all=None):
 
         print ("delete files ")
         print (idm_status.status_track)
-        idm_status.socketio.emit('progres', {})
+        await idm_status.socketio.emit('progres', {})
 
     await write_status_file(idm_status.status_track)

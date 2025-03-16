@@ -66,6 +66,7 @@ function App() {
 
   const sendMessage = (message) => {
     toast("Hello Geeks");
+    socket.current.emit('message', 'Hello am front ');
     // console.log(message);
   };
 
