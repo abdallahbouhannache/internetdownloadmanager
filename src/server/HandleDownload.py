@@ -1,20 +1,11 @@
-# from constants import STATUS_DOWNLOAD_FILE ,SAVE_DIR, idm_status.status_track
-
-from tool import get_bandwith_speed,write_chunk_to_file,retry_internet_check, read_status_file ,write_status_file
+from tool import write_chunk_to_file,retry_internet_check
 from flask import jsonify
 import os
 import re
-import aiohttp
 import asyncio
-import aiofiles
-import bson
-
 from constants import STATUS_DOWNLOAD_FILE ,SAVE_DIR ,idm_status
-from observer_socket import get_socketio,get_status
 import requests
 import tempfile
-
-# global constants
 
 async def download_file(file_infos):
     id = file_infos.get('id') or None
@@ -33,20 +24,13 @@ async def download_file(file_infos):
     file_save_path = os.path.join(save_dir, file_name)
     file_size = file_infos.get('File_Size') or 0
 
-    # if os.path.exists(save_state_file):
-    # await read_status_file()
-
     if os.path.exists(file_save_path) :
         downloaded_size=os.path.getsize(file_save_path)
         if command=="restart":
             os.remove(file_save_path)
             downloaded_size=0
-
-    print("down_size",downloaded_size)
-    print("filesize",file_size)
-    print("resuming",0 if file_size==downloaded_size else downloaded_size)
     
-    idm_status.status_track[file_name] = {
+    local_file_status= {
         "id": id,
         "Url": file_url,
         "Finished": finished,
@@ -60,154 +44,91 @@ async def download_file(file_infos):
         "File_Size": file_size,
         "SavePath": save_dir,
         "Resume": False,
-    }       
+    }
 
-    # socketio=get_socketio()
-    # idm_status.socketio
-    
-    # add retry of grabbing file size here otherwise stop downloading
-    # if not file_size:
-    #     idm_status.status_track[file_name]['Status'] = False
-        # await socketio.emit('progres', idm_status.status_track)
-        # await write_status_file(idm_status.status_track)
+    await idm_status.status_queue.put((file_name, local_file_status))
+    session=idm_status.open_session
 
-    async with aiohttp.ClientSession() as session:
-        internet=await retry_internet_check(session,"www.google.com")
-        if not internet or not file_size:
-            # await it here # add retry of grabbing file size here otherwise stop downloading
-            idm_status.status_track[file_name]['Status'] = False
-            await write_status_file(idm_status.status_track)
-            await idm_status.socketio.emit('progres', idm_status.status_track)
-            error="No internet connection" if not internet else f"File {file_name}  Filesize error"
-            return jsonify({error}), 503
-        print("internet and file_size is ok")
+    # async with aiohttp.ClientSession() as session:
+    internet=await retry_internet_check(session,"www.google.com")
+    if not internet or not file_size:
+        # await it here # add retry of grabbing file size here otherwise stop downloading
+        local_file_status['Status'] = False
+        await idm_status.status_queue.put((file_name, local_file_status))
+        idm_status.session_event.set()  # Wake up session manager
+        error="No internet connection" if not internet else f"File {file_name}  Filesize error"
+        return jsonify({error}), 503
+    print("internet and file_size is ok")
 
-        try:
-            await idm_status.socketio.emit('progres', idm_status.status_track)
-            await write_status_file(idm_status.status_track)
+    try:
+        await idm_status.status_queue.put((file_name, local_file_status))
+        # Use tempfile for unique temp path
+        with tempfile.NamedTemporaryFile(delete=False) as tmp:
+            tmp_path = tmp.name
+        tasks = []
+        chunk_size = file_size // Conx_number # size of each chunk in bytes
+        chunks = [(i * chunk_size, (i+1) * chunk_size - 1) for i in range(file_size // chunk_size)]
+        for start, end in chunks:
+            task=download_task(session, file_url, start, end,file_name,file_save_path,tmp_path)
+            tasks.append(task)
+            await idm_status.bandwidth_queue.put((file_name, "add", local_file_status))
+            await asyncio.sleep(0.1)
 
-            # Use tempfile for unique temp path
-            with tempfile.NamedTemporaryFile(delete=False) as tmp:
-                tmp_path = tmp.name
-            print("-----------downloaded size pos-1",idm_status.status_track[file_name]['Downloaded'])
-            tasks = []
-            chunk_size = file_size // Conx_number # size of each chunk in bytes
-            chunks = [(i * chunk_size, (i+1) * chunk_size - 1) for i in range(file_size // chunk_size)]
-            for start, end in chunks:
-                print(f"chunks: start={start}, end={end}")  
-                print(f"chunks: some={start + end}")  
-                task=download_task(session, file_url, start, end,file_name,file_save_path,tmp_path)
-                tasks.append(task)
-                await asyncio.sleep(0.1)
-
-            # speed_task=get_bandwith_speed(session,file_name,file_url)
-            # tasks.append(speed_task)
-
-            print("getting started to download 1")
-            await asyncio.gather(*tasks)
-            print("finished the download tasks 1")            
-        except ConnectionError as e:
-            idm_status.status_track[file_name]['Status'] = False
-            await write_status_file(idm_status.status_track)
-            # socketio.emit('progres', idm_status.status_track)
-            await idm_status.socketio.emit('progres', idm_status.status_track)
-            print("error in fetching file")
-            return jsonify({'error': 'Error starting download'}), 503
-            # return
+        await asyncio.gather(*tasks)
+        await idm_status.bandwidth_queue.put((file_name, "remove", local_file_status))
+    except ConnectionError as e:
+        local_file_status['Status'] = False
+        await idm_status.status_queue.put((file_name, local_file_status))
+        await idm_status.bandwidth_queue.put((file_name, "remove", local_file_status))
+        return jsonify({'error': 'Error starting download'}), 503
 
 async def download_task(session, url, start, end,file_name,file_save_path,tmp_path):
     File_Bytes=bytearray()
-
-    socketio=get_socketio()
     headers = {'Range': f'bytes={start}-{end}'}
-    # headers = {'User-Agent': 'Mozilla/5.0'}
-    
-    # await read_status_file()
     async with session.get(url, headers=headers) as response:
-        print("inside task x")
-        async with idm_status.status_lock:
-            local_file_status=idm_status.status_track.get(file_name, {})
-
         current_size = start      
-        # await asyncio.sleep(0.1)
         while current_size <= end :
-            print("inside loopo task x")
             await asyncio.sleep(1)
             async with idm_status.status_lock:  # Ensure safe read access
-                file_status = idm_status.status_track.get(file_name, {}).get('Status', False)
-                if not file_status:
-                    print("file_status is false")
-                    break
-                speed = idm_status.status_track.get(file_name, {}).get('Speed', False)
-                local_file_status['Speed']=speed
-
+                local_file_status=idm_status.status_track.get(file_name, {})
+            file_status = local_file_status.get('Status', False)
+            if not file_status:
+                break
+            speed = local_file_status.get('Speed', 50000)
+            local_file_status['Speed']=speed
             try:
                 remaining_bytes = end - current_size + 1
                 chunk_size = min(speed, remaining_bytes)
                 chunk = await asyncio.wait_for(response.content.read(chunk_size), timeout=5)
                 if not chunk:
-                    print("end of download")
                     break  # Exit loop if no more data
                 File_Bytes+=chunk
                 current_size += len(chunk)
-                # socketio.emit('progres', idm_status.status_track)
-                # idm_status.status_track[file_name]['Downloaded'] += len(chunk)
                 local_file_status['Downloaded']+= len(chunk)
-                await idm_status.status_queue.put((file_name, local_file_status))
-
-                # updated_global_status = {**idm_status.status_track, **local_file_status}
-                # await socketio.emit('progres', updated_global_status)
-
             except asyncio.TimeoutError:
-                print(f"A connection error occurred: ")
                 internet=await retry_internet_check(session,"www.google.com")
                 if not internet:
-                    # idm_status.status_track[file_name]['Status'] = False
                     local_file_status['Status']=False
                     break
-                    # socketio.emit('progres', idm_status.status_track)
-                    # socketio.emit('progres', idm_status.status_track)
-                    # await write_status_file(idm_status.status_track)
-                    # return jsonify({'error': 'No internet connection'}), 503
-                # await asyncio.sleep(0.1)
-                # continue
             except Exception as e:
-                print('some other exception')
-                # idm_status.status_track[file_name]['Status'] = False
                 local_file_status['Status']=False
                 break
-                # socketio.emit('progres', idm_status.status_track)
-                # return jsonify({'error': 'some error happened try later'}), 503
-
-
-        # file_size=idm_status.status_track[file_name]['File_Size'] or 0
-        file_size=local_file_status.get('File_Size') or 0
-        downloaded_size=local_file_status.get('Downloaded') or 0
-
-        print(f"downloading parts of [{file_name}]",local_file_status)
-        if downloaded_size >= file_size :
-            # idm_status.status_track[file_name]['Finished'] = True
-            # idm_status.status_track[file_name]['Status'] = False
-            local_file_status['Finished']=True
-            local_file_status['Status']=False
             await idm_status.status_queue.put((file_name, local_file_status))
 
-            # await socketio.emit('progres', updated_global_status)
-            # await write_status_file(idm_status.status_track)
+    file_size=local_file_status.get('File_Size',0)
+    downloaded_size=local_file_status.get('Downloaded',0)
+    print(f"downloading parts of [{file_name}]",local_file_status)
+    if downloaded_size >= file_size :
+        local_file_status['Finished']=True
+        local_file_status['Status']=False
+    idm_status.session_event.set()  # Wake up session manager
+    await idm_status.status_queue.put((file_name, local_file_status))   
+    await idm_status.bandwidth_queue.put((file_name, "remove", local_file_status))
+    await asyncio.sleep(0.5)
+    await write_chunk_to_file(tmp_path,file_save_path,File_Bytes,file_name,start,file_size)
 
-            print("download is finished  > ",local_file_status['Finished'])
-            # socketio.emit('progres', idm_status.status_track)           
-
-        
-
-        await asyncio.sleep(0.5)
-        await write_chunk_to_file(tmp_path,file_save_path,File_Bytes,file_name,start,file_size)
-
-    print("finished task X")  
-
-
+    """ match and return filename and extension """
 def get_file_name(FullFileName):
-    # global constants 
     [file_name, ext] = FullFileName.rsplit(".",1) or [
         "download",
         "html",
@@ -219,8 +140,8 @@ def get_file_name(FullFileName):
     unique_file_name=f'{file_name}{file_count}.{ext}'
     return unique_file_name,ext
 
-def get_file_info(url, max_name_length=50):
-    print("get_file_info")
+""" fetch filename,ext,filesize from a url  """
+async def get_file_info(url, max_name_length=50):
     info = {
         'FileName': "download.html",
         'ext': "html",
@@ -231,15 +152,11 @@ def get_file_info(url, max_name_length=50):
         # Try HEAD request first
         response = requests.head(url, headers=headers, allow_redirects=True, timeout=13)
         content_length = response.headers.get('Content-Length')
-        print("HEAD response:", response.headers)
 
-        # If Content-Length is missing, fall back to GET with stream
         if content_length is None:
-            print("HEAD failed to get size, trying GET...")
             response = requests.get(url, stream=True, allow_redirects=True, timeout=13)
             content_length = response.headers.get('Content-Length')
             if content_length is None:
-                print("Unable to retrieve file size from GET either.")
                 return info  # Return default info if still no size
 
         file_size = int(content_length)
@@ -256,5 +173,4 @@ def get_file_info(url, max_name_length=50):
         return info
 
     except requests.RequestException as e:
-        print(f"An error occurred: {e}")
         return info
